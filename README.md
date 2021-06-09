@@ -1,1 +1,1 @@
-# phywppl
+# Phylogenetic models in WebPPL
