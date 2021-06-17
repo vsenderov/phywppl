@@ -8,7 +8,9 @@
    },
    "webppl": {
       "wppl": [
-         "models/crbd.wppl"
+         "models/crbd.wppl",
+         "models/clads2.wppl",
+         "models/clads2m.wppl"
       ]
    },
    "scripts": {
