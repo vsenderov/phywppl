@@ -13,7 +13,7 @@
          "models/clads0-panda.wppl",
          "models/clads1.wppl",
          "models/clads2.wppl",
-         models/clads2m.wppl",
+         "models/clads2m.wppl",
          "models/clads2-panda.wppl",
          "models/crbd.wppl",
          "models/crbd-naive.wppl",
