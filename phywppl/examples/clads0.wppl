@@ -1,18 +1,16 @@
 /**
- * ClaDS2
+ * ClaDS0
  *
  * To run the example use:
  *
- * npm run wppl examples/clads2.wppl [N] [TREEPATH] [RHO] [NPART]
- * example:
- * npm run wppl examples/clads2.wppl 1 ../data/bisse_32.phyjson 1 500
+ * npm run wppl examples/clads1.wppl [N] [TREEPATH] [RHO] [NPART]
  *
  * where [N] is the number of iterations, for example 3
  *       [TREEPATH] path to phyjson tree
  *       [NPART] number of particles
  *
  */
-  
+
 var tree = phyjs.read_phyjson(argv["_"][1])
 var rho = argv["_"][2]
 var particles = argv["_"][3]
@@ -27,22 +25,21 @@ var PANDA = false
  */
 var model = function()
 {
-    
-    // Test settings to compare with analytical CRBD
+
+    // Test settings to compare with analytical CRBD with mu = 0
     var lambda_0 = 0.2
-    var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
-    var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
-    var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    var sigma    = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
+    var alpha    = Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
-    var ret = simClaDS2( tree, lambda_0, alpha, sigma, epsilon, rho )
+    var ret = simClaDS0( tree, lambda_0, alpha, sigma, rho )
 
-    // Condition on detection
+    // Condition on survival
     var max_M = 10000
-    var M = M_clads2GoesUndetected( tree.age, lambda_0, alpha, sigma, epsilon, rho, max_M)
+    var M = M_clads0GoesUndetected( tree.age, lambda_0, alpha, sigma, rho, max_M )
     factor(Math.log(M))
-    
+
     return ret
 }
 

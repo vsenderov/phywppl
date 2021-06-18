@@ -9,6 +9,8 @@
    "webppl": {
       "wppl": [
          "models/crbd.wppl",
+         "models/clads0.wppl",
+         "models/clads1.wppl",
          "models/clads2.wppl",
          "models/clads2m.wppl"
       ]
@@ -21,7 +23,7 @@
    },
    "dependencies": {
       "phyjs": "file:../phyjs",
-      "shelljs": "^0.8.3"
+      "shelljs": "^0.8.4"
    },
    "devDependencies": {}
 }
