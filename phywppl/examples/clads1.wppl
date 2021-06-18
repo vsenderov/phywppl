@@ -49,6 +49,6 @@ var model = function()
 
 /**
  * Inference
- * tweak the number of particles if you want to */
+  */
 var dist = Infer({method: 'SMC', particles: particles, model: model})
 dist.normalizationConstant
