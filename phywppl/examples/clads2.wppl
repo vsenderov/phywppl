@@ -20,7 +20,6 @@ var particles = argv["_"][3]
 var MAX_DIV = 20
 var MAX_LAMBDA = 20
 var MIN_LAMBDA = 1e-6
-var PANDA = false
 
 /**
  * Model specification
@@ -30,9 +29,15 @@ var model = function()
     
     // Test settings to compare with analytical CRBD
     var lambda_0 = 0.2
-    var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
-    var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+    var sigma = 0.1
+    var alpha =   0.95
     var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    
+    // Settings
+        // var lambda_0 = 0.2
+        // var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
+        // var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+        // var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
 
     // Simulate conditionally on the tree
     // It returns all variables of interest

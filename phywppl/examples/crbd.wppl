@@ -42,15 +42,16 @@ var model = function()
     // It returns all variables of interest
     var ret = simCRBD(tree, lambda, mu, rho)
 
-    // Condition on detection is OFF
-    // var max_M = 10000 // abort survivorship bias if recursion is too deep
-    // var M = M_crbdGoesUndetected(tree.age, lambda, mu, rho, max_M)
-    // factor(Math.log(M))
+    // Condition on detection
+     var max_M = 10000 // abort survivorship bias if recursion is too deep
+     var M = M_crbdGoesUndetected(tree.age, lambda, mu, rho, max_M)
+     factor(Math.log(M))
     
     return lambda
 }
 
 /**
  * Inference
+   */
 var dist = Infer({method: 'SMC', particles: particles, model: model})
 dist.normalizationConstant

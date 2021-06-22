@@ -1,6 +1,6 @@
 /** 
  * ClaDS2m
- * Modified version with small probability of large shift in lambda at speciation, for one daughter line
+ * Modified version with small probability of large shift in lambda at speciation, for both daughter lines
  * 
  * To run the example use:
  * 
@@ -40,7 +40,7 @@ var model = function()
         // var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
     
     //New variable: probability of large shift at speciation. If 0, collapses to ClaDS2 model.
-    var pshift = 0.0
+    var pshift = 0.00
 
     // Simulate conditionally on the tree
     // It returns all variables of interest

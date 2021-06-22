@@ -18,7 +18,6 @@ var particles = argv["_"][3]
 var MAX_DIV = 20
 var MAX_LAMBDA = 20
 var MIN_LAMBDA = 1e-6
-var PANDA = false
 
 /**
  * Model specification

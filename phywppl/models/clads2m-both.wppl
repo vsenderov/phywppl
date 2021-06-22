@@ -77,7 +77,7 @@ var clads2mGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, 
 
     // Speciation; first draw values for daughter lineages and then recurse
     var lambda1 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-    var lambda2 = Math.exp( gaussian( {mu: Math.log( alpha * lambda ), sigma: sigma} ) )
+    var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
     return ( clads2mGoesUndetected( currentTime, lambda1, alpha, sigma, epsilon, rho, pshift )
           && clads2mGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift ) )
 }
@@ -126,7 +126,7 @@ var simClaDS2m = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
 	// We arbitrarily assume that lambda1 applies to the surviving lineage
 	// and lambda2 to the extinct side lineage.
 	var lambda1 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-	var lambda2 = Math.exp( gaussian( {mu: Math.log( alpha * lambda ), sigma: sigma} ) )
+	var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
 	var sideUndetected = clads2mGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift )
 	if ( sideUndetected == false )   // means detected and not extinct
             return [ 0.0, 0.0, -Infinity ]
@@ -145,12 +145,12 @@ var simClaDS2m = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
 	{
 		return (Math.exp(gaussian({mu:Math.log(alpha*lambdaEnd),sigma:sigma})))
 	}
-	
+
 	if ( parent == null )
 	{
 	    
 	    var lambda1 =  lambda_chooserNew(lambda, alpha, sigma, pshift)
-	    var lambda2 = lambda_chooser(lambda, lambda, alpha, sigma)
+	    var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
 
 	    // Recursive call under diversification rates
             var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, epsilon, rho, pshift )
@@ -184,7 +184,7 @@ var simClaDS2m = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
 	{
 	    
 	    var lambda1 = lambda_chooserNew(lambdaEnd, alpha, sigma, pshift)
-	    var lambda2 = lambda_chooser(lambda, lambdaEnd, alpha, sigma)
+	    var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
 
 	    // Get daughter rates and then recurse
             var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, epsilon, rho, pshift )

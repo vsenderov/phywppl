@@ -120,23 +120,8 @@ var simClaDS1 = function( tree, lambda0, alpha, sigma, mu0, rho )
 
 	var lambda_chooser = function(lambda, lambdaEnd, alpha, sigma)
 	{
-	    if (PANDA) {
-		observe(Gaussian({mu:Math.log(alpha*lambdaEnd),sigma:sigma}),Math.log(lambda))
-		return lambda
-	    } else {
 		return (Math.exp(gaussian({mu:Math.log(alpha*lambdaEnd),sigma:sigma})))
-	    }
 	}
-	
-	// var lambda_chooser = function(lambda, lambdaEnd, alpha, sigma) {
-	//     if (PANDA == true) {
-	// 	factor( phyjs.lognormal_logpdf( lambda, sigma, Math.log( alpha * lambdaEnd ) ) )
-	// 	return lambda
-	//     }
-	//     else {
-	// 	return ( Math.exp( gaussian( {mu: Math.log( alpha * lambdaEnd ), sigma: sigma} ) ) )
-	//     }
-	// }
 	
 	if ( parent == null )
 	{
