@@ -30,8 +30,8 @@ var model = function()
     
     // Test settings to compare with analytical CRBD
     var lambda_0 = 0.2
-    var sigma = 0.1
-    var alpha =   0.95
+    var sigma = 0.0000001
+    var alpha =   1// 0.95
     var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
     
     // Settings

@@ -89,13 +89,6 @@ var model = function()
 
 /**
  * Inference
- * tweak the number of particles if you want to */
-var particles = 1000
-var dist = Infer( {method: 'SMC', particles: particles, model: model} );
-
-
-/** 
- *Print the distribution or the normalization constant
  */
-// dist;
+var dist = Infer( {method: 'SMC', particles: particles, model: model} );
 dist.normalizationConstant;
