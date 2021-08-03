@@ -8,6 +8,7 @@
  *
  * where [N] is the number of iterations, for example 3
  *       [TREEPATH] path to phyjson tree
+ *       [RHO] sampling probability
  *       [NPART] number of particles
  *
  */

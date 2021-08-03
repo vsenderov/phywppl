@@ -7,13 +7,17 @@
  * 
  * where [N] is the number of iterations, for example 3
  *       [TREEPATH] path to phyjson tree
+ *       [RHO] sampling probability
  *       [NPART] number of particles
+ *
+ *
  *
  * Features:
  *   - no guards: eliminate guards with Jan's Walk
  *   - priors: new priors (draw mu and lambda)
  *
  */
+ 
 var tree = phyjs.read_phyjson(argv["_"][1])
 var rho = argv["_"][2]
 var particles = argv["_"][3]
