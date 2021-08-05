@@ -11,6 +11,7 @@
          "models/crbd.wppl",
          "models/crbd-analytical.wppl",
          "models/clads0.wppl",
+         "models/clads0multip.wppl",
          "models/clads1.wppl",
          "models/clads2.wppl",
          "models/clads2m.wppl",

@@ -26,20 +26,20 @@ var outcome = flip(pshift)
 	 }
 }
  
-var M_clads2mGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, max_M, pshift)
+var M_clads2mbothGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, max_M, pshift)
 {
     if ( max_M == 0 ) return NaN
     // We need to survive twice
-    if (!clads2mGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift ) &&
-	!clads2mGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift )) return 1
-    else return(1 + M_clads2mGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, max_M - 1, pshift ))
+    if (!clads2mbothGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift ) &&
+	!clads2mbothGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift )) return 1
+    else return(1 + M_clads2mbothGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, max_M - 1, pshift ))
 }
 
 
 
 // Forward simulation from a starting time, returning whether the lineage
 // goes undetected or extinct (true) or not (false)
-var clads2mGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, pshift)
+var clads2mbothGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, pshift)
 {
     var mu = epsilon * lambda
 
@@ -78,14 +78,14 @@ var clads2mGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, 
     // Speciation; first draw values for daughter lineages and then recurse
     var lambda1 = lambda_chooserNew(lambda, alpha, sigma, pshift)
     var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-    return ( clads2mGoesUndetected( currentTime, lambda1, alpha, sigma, epsilon, rho, pshift )
-          && clads2mGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift ) )
+    return ( clads2mbothGoesUndetected( currentTime, lambda1, alpha, sigma, epsilon, rho, pshift )
+          && clads2mbothGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift ) )
 }
 
 
 
 // Simulation function for Clads2 model with random sampling"
-var simClaDS2m = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
+var simClaDS2mboth = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
 {
     // Simulate process along a branch
     var simBranch = function( startTime, stopTime, lambda, alpha, sigma, epsilon, rho, pshift)
@@ -127,7 +127,7 @@ var simClaDS2m = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
 	// and lambda2 to the extinct side lineage.
 	var lambda1 = lambda_chooserNew(lambda, alpha, sigma, pshift)
 	var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-	var sideUndetected = clads2mGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift )
+	var sideUndetected = clads2mbothGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift )
 	if ( sideUndetected == false )   // means detected and not extinct
             return [ 0.0, 0.0, -Infinity ]
 

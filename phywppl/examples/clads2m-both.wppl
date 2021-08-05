@@ -45,11 +45,11 @@ var model = function()
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
-    var ret = simClaDS2m( tree, lambda_0, alpha, sigma, epsilon, rho, pshift)
+    var ret = simClaDS2mboth( tree, lambda_0, alpha, sigma, epsilon, rho, pshift)
     
     // Condition on detection
     var max_M = 10000
-    var M = M_clads2mGoesUndetected( tree.age, lambda_0, alpha, sigma, epsilon, rho, max_M, pshift)
+    var M = M_clads2mbothGoesUndetected( tree.age, lambda_0, alpha, sigma, epsilon, rho, max_M, pshift)
     factor(Math.log(M))
     return ret
 }
