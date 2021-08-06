@@ -28,8 +28,8 @@ var model = function()
 
     // Test settings to compare with analytical CRBD with mu = 0
     var lambda_0 = 0.2
-    var sigma    = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
-    var alpha    = Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+    var sigma    = 0.1// Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
+    var alpha    = 0.95 //Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
 
     // Simulate conditionally on the tree
     // It returns all variables of interest

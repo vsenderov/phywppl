@@ -32,8 +32,8 @@
              var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw AND calc new multiplier set for daughter2
              var lambda1 = lambda_0 * multip1                                // Calculate new lambda for daughter1
              var lambda2 = lambda_0 * multip2                                // Calculate new lambda for daughter2
-            display("Spec")
-                display([lambda, lambda1, lambda2, multip, multip1, multip2])
+//            display("Spec")
+//                display([lambda, lambda1, lambda2, multip, multip1, multip2])
         return([lambda1, lambda2, multip1, multip2])
       }
  }
