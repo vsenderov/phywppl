@@ -150,7 +150,7 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
         var multip2 = decision[3]
 
 
-	var sideUndetected = cladsplusGoesUndetected( startTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
+	var sideUndetected = cladsplusGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
 	if ( sideUndetected == false )   // means detected and not extinct
             return [ 0.0, 0.0, -Infinity ]
 
