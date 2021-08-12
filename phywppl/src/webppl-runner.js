@@ -158,12 +158,12 @@ shell.exec(compile_command)
 
 
 //Execution
-// exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=4096 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
-// console.log(exec_command)
+ exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=4096 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
+ console.log(exec_command)
 
-// for (i = 0; i < iterations; i++) {
-//     shell.exec(exec_command, {async:true} )
-// }
+ for (i = 0; i < iterations; i++) {
+     shell.exec(exec_command, {async:true} )
+ }
 
 
 

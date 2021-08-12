@@ -1,0 +1,25 @@
+/** 
+ * @file 
+ * Example: Constant-rate birth-death analytical solution
+ * 
+ * To run the example use:
+ * 
+ * npm run wppl examples/crbd-analytical.wppl [N] [TREEPATH]
+ * 
+ * where [N] is the number of iterations, for example 3
+ *       [TREEPATH] path to phyjson tree
+ *
+ */
+
+
+var tree = phyjs.read_phyjson(argv["_"][1])
+
+
+// Set lambda and mu
+var lambda = 0.2
+var mu     = 0.1
+var rho    = 0.5
+
+// Compute the likelihood
+exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
+

@@ -55,20 +55,14 @@ var model = function()
 var particles = 20000
 var dist = Infer( {method: 'SMC', particles: particles, model: model} );
 
-viz(dist, {
-    fileName: 'neurips-plots/crbd-smc.svg'
-})
 
 /** MCMC Inference */
-var dist_mcmc = Infer({
-    model: model,
-    samples: 20000,
-    burn: 100000,
-    method: "MCMC"
-})
+//var dist_mcmc = Infer({
+//    model: model,
+//    samples: 20000,
+//    burn: 100000,
+//    method: "MCMC"
+//})
 
-viz(dist_mcmc, {
-    fileName: 'neurips-plots/crbd-mcmc.png'
-})
 
 dist.normalizationConstant;

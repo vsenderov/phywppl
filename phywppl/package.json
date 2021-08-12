@@ -8,7 +8,16 @@
    },
    "webppl": {
       "wppl": [
-         "models/crbd.wppl"
+         "models/crbd.wppl",
+         "models/crbd-analytical.wppl",
+         "models/clads0.wppl",
+         "models/clads0multip.wppl",
+         "models/clads1.wppl",
+         "models/clads2.wppl",
+         "models/clads2m.wppl",
+         "models/clads2m-both.wppl",
+         "models/cladsplus.wppl",
+         "models/bamm.wppl"
       ]
    },
    "scripts": {
@@ -19,7 +28,7 @@
    },
    "dependencies": {
       "phyjs": "file:../phyjs",
-      "shelljs": "^0.8.3"
+      "shelljs": "^0.8.4"
    },
    "devDependencies": {}
 }

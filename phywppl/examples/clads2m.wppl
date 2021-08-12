@@ -1,0 +1,64 @@
+/** 
+ * ClaDS2m
+ * Modified version with small probability of large shift in lambda at speciation, for one daughter line
+ * 
+ * To run the example use:
+ * 
+ * npm run wppl examples/clads2m.wppl [N] [TREEPATH] [RHO] [NPART]
+ *
+ * where [N] is the number of iterations, for example 3
+ *       [TREEPATH] path to phyjson tree
+ *       [RHO] sampling probability
+ *       [NPART] number of particles
+ *
+ */
+ 
+var tree = phyjs.read_phyjson(argv["_"][1])
+var rho = argv["_"][2]
+var particles = argv["_"][3]
+
+
+var MAX_DIV = 20
+var MAX_LAMBDA = 20
+var MIN_LAMBDA = 1e-6
+
+/**
+ * Model specification
+ */
+var model = function()
+{
+    
+    // Test settings to compare with analytical CRBD
+    var lambda_0 = 0.2
+    var sigma = 0.1
+    var alpha =   0.95
+    var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    
+    // Settings
+        // var lambda_0 = 0.2
+        // var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
+        // var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+        // var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    
+    //New variable: probability of large shift at speciation. If 0, collapses to ClaDS2 model.
+    var pshift = 0.0
+
+    // Simulate conditionally on the tree
+    // It returns all variables of interest
+    var ret = simClaDS2m( tree, lambda_0, alpha, sigma, epsilon, rho, pshift)
+    
+    // Condition on detection
+    var max_M = 10000
+    var M = M_clads2mGoesUndetected( tree.age, lambda_0, alpha, sigma, epsilon, rho, max_M, pshift)
+    factor(Math.log(M))
+    return ret
+}
+
+
+
+/**
+ * Inference
+  */
+var dist = Infer({method: 'SMC', particles: particles, model: model})
+dist.normalizationConstant
+

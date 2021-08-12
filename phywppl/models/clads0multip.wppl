@@ -1,0 +1,222 @@
+/** 
+ * M Iterations to Survive
+ *  
+ * Computes M, the number of simulations needed to generate a lineage surviving
+ * to the present.
+ *
+ * @param startTime
+ * @param lambda
+ * @param mu
+ * @param rho
+ * @param multip
+ * @param max_M (integer) A guard against very deep recursions.
+ *
+ * @return M
+ */
+ 
+ var speciation_decisions = function(lambda, alpha, sigma, multip)
+  {
+        display("speciation")
+        var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
+        var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
+        var lambda1 = lambda_0 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = lambda_0 * multip2                                // Calculate new lambda for daughter2
+        display([lambda1, lambda2, multip1, multip2])
+        return([lambda1, lambda2, multip1, multip2])
+ }
+ 
+var M_clads0multipGoesUndetected = function( startTime, lambda, alpha, sigma, rho, max_M, multip )
+{
+    if ( max_M == 0 ) return NaN
+    // We need to survive twice
+    if (!clads0multipGoesUndetected( startTime, lambda, alpha, sigma, rho, multip ) &&
+	!clads0multipGoesUndetected( startTime, lambda, alpha, sigma, rho, multip )) return 1
+    else return(1 + M_clads0multipGoesUndetected( startTime, lambda, alpha, sigma, rho, max_M - 1, multip ))
+}
+
+
+// Forward simulation from a starting time, returning whether the lineage goes
+// undetected (true) or is detected (false)
+var clads0multipGoesUndetected = function( startTime, lambda, alpha, sigma, rho, multip )
+{
+    // extreme values patch 1/2
+    if ( lambda  > phyjs.MAX_LAMBDA )
+	return false
+
+    if ( lambda == 0.0 )
+    {
+	if ( flip( rho ) )
+	    return false
+        else
+            return true
+    }
+    // end extreme values patch 1/2
+    
+    var t = exponential( {a: lambda } )
+    
+    var currentTime = startTime - t
+    if ( currentTime < 0 )
+    {
+        if ( flip( rho ) )
+            return false
+        else
+            return true
+    }
+
+    // Speciation; first draw values for daughter lineages and then recurse
+        var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
+        var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
+        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+         //       display([lambda1, lambda2, multip1, multip2])
+	return ( clads0multipGoesUndetected( currentTime, lambda1, alpha, sigma, rho, multip1 )
+          && clads0multipGoesUndetected( currentTime, lambda2, alpha, sigma, rho, multip2 ) )
+}
+
+
+/** 
+ * ClaDS0 model from Maliet et al. (2019) with
+ *    random sampling of tips accommodated
+ * 
+ * Implementation details:
+ *  - assuming unstalked tree
+ *  - no correction for survivorship bias
+ *  - density on unoriented labeled trees
+ *  - aligned inference
+ *  - accommodating random sampling of leaves
+ *
+ * @param tree          The reconstructed phylogenetic tree
+ * @param lambda0       Initial birth (speciation) rate
+ * @param alpha         Direction of change in lambda (λ multiplier) at speciation events
+ * @param sigma         Standard deviation of lambda (in log space)
+ * @param rho           Sampling probability
+ * 
+ * @return [lambda0, alpha, sigma, tree] where tree contains sampled diversification rate parameters
+ *                                       in extended newick format
+ *
+ */
+var simClaDS0multip = function( tree, lambda_0, alpha, sigma, rho, multip )
+{
+    // Simulate process along a branch
+    var simBranch = function( startTime, stopTime, lambda, alpha, sigma, rho, multip )
+    {
+
+	var t1 = startTime - stopTime
+	// extreme values patch 2/2
+	if ( lambda  > phyjs.MAX_LAMBDA )
+	    return [ 0.0, 0.0, -Infinity ]
+	
+	if ( lambda == 0.0 )
+	{
+	    var t1 = startTime - stopTime
+            return [ lambda, lambda*t1, 0.0 ]
+	}
+	// extreme values patch 2/2
+	
+	// Draw a waiting time until next speciation
+	var t = exponential ( {a: lambda} )
+
+	// Compute current time
+	var currentTime = startTime - t;
+
+	// This is the terminating condition, return ending lambda,
+	// and effective lambda and probability contributions
+	if ( currentTime <= stopTime )
+            return [ lambda, lambda*t1, 0.0 ]
+
+	// We have a speciation event; handle this case
+	// We arbitrarily assume that lambda1 applies to the surviving lineage
+	// that is sampled, and that lambda2 applies to the undetected side lineage.
+        var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
+        var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
+        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+            //    display([lambda1, lambda2, multip1, multip2])
+	var sideUndetected = clads0multipGoesUndetected( currentTime, lambda2, alpha, sigma, rho, multip2 )
+	if ( sideUndetected == false )
+            return [ 0.0, 0.0, -Infinity ]
+
+	// Return probability from recursion plus factor 2 * lambda; factor 2 because we
+	// do not care whether the undetected tree is on the left or right side branch
+	var ret = simBranch( currentTime, stopTime, lambda1, alpha, sigma, rho, multip1 )
+	return [ ret[0], ret[1] + lambda*t, ret[2] + Math.log( 2.0 ) ]
+    }
+
+
+    // Simulate process along a tree
+    var simTree = function( tree, parent, lambda, alpha, sigma, rho, multip )
+    {
+	if ( parent == null )
+	{
+        var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
+        var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
+        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+             //   display("null")
+             //   display([lambda1, lambda2, multip1, multip2])
+	    
+            // Recursive call under diversification rates
+            var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, rho, multip1 )
+            var subtree2 = simTree( tree.right, tree, lambda2, alpha, sigma, rho, multip2 )
+
+            // Return total subtree with diversification info attached as an 'extended newick' character string
+            var nodeInfo = '[&lambda=' + lambda + ']'
+            return '(' + subtree1 + ',' + subtree2 + ')' + nodeInfo
+	}
+
+	// Simulate process along branch leading to node
+	var ret = simBranch( parent.age, tree.age, lambda, alpha, sigma, rho, multip )
+	var lambdaEnd = ret[0]
+
+	// Factor in the accumulated probability weight, plus speciation weight at end of branch if
+	// it is an internal node. For a leaf, we need to consider the sampling probability.
+	var lnEndProb = ( tree.type == 'node' ? Math.log( lambdaEnd ) : Math.log( rho ) )
+	factor( ret[2] + lnEndProb )
+
+	// Collect node info
+	var nodeInfo = '[&lambda=' + ret[0] + ']'
+
+	// Collect branch info
+	var length = parent.age - tree.age
+	var branchInfo = '[&effectiveLambda=' + (ret[1]/length) + ']'
+
+	if ( tree.type == 'node' )
+	{
+            // Get daughter rates and then recurse
+        var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
+        var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
+        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+              //  display([lambda1, lambda2, multip1, multip2])
+            var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, rho, multip1 )
+            var subtree2 = simTree( tree.right,  tree, lambda2, alpha, sigma, rho, multip2 )
+
+            // Return total subtree with diversification info attached as an 'extended newick' character string
+            return '(' + subtree1 + ',' + subtree2 + ')' + nodeInfo + ':' + length + branchInfo
+	}
+	else
+	{
+            // Return leaf with diversification info attached as an 'extended newick' character string
+            return tree.index + nodeInfo +  ':' + length + branchInfo
+	}
+    }
+
+
+    // Convert to density on unoriented labeled trees up front
+    var numLeaves = phyjs.countLeaves( tree )
+    var corrFactor = ( numLeaves - 1 ) * Math.log( 2.0 ) - phyjs.lnFactorial( numLeaves )
+    factor( corrFactor )
+    
+    // Simulate conditionally on the tree
+    var tree = simTree( tree, null, lambda_0, alpha, sigma, rho, multip )
+    
+    // Return model parameters and tree that contains the lineage-specific parameters of interest
+
+    return [ lambda_0, alpha, sigma, tree ]
+}
+
+
+
+
+
+
