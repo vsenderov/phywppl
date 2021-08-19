@@ -18,7 +18,7 @@
  * @return M
  */
  
- var speciation_decisions2 = function(lambda_0, lambda, alpha, sigma, shift, multip)
+ var speciation_decisions2 = function(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon)
   {
   var outcome = flip(shift)            // Is there going to be a large shift?
      if (outcome == true) {               // Yes, large shift
@@ -26,35 +26,41 @@
              var multip2 = Math.exp(gaussian( {mu: alpha, sigma: sigma})) // ONLY draw new multiplier for daughter2
              var lambda1 = lambda_0 * multip1                     // Calculate new lambda for daughter1
              var lambda2 = lambda_0 * multip2                     // Calculate new lambda for daughter2
-         return([lambda1, lambda2, multip1, multip2])
+             var mu1 = mu_0 * multip1                             // Calculate new mu for daughter1
+             var mu2 = mu_0 * multip2                             // Calculate new mu for daughter2
+            display("Spec shift")
+            display([epsilon, mu1/lambda1, mu2/lambda2])
+         return([lambda1, lambda2, multip1, multip2, mu1, mu2])
              } else {                     // No large shift
              var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw AND calc new multiplier set for daughter1
              var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw AND calc new multiplier set for daughter2
              var lambda1 = lambda_0 * multip1                                // Calculate new lambda for daughter1
              var lambda2 = lambda_0 * multip2                                // Calculate new lambda for daughter2
-//            display("Spec")
-//                display([lambda, lambda1, lambda2, multip, multip1, multip2])
-        return([lambda1, lambda2, multip1, multip2])
+             var mu1 = mu_0 * multip1                                   // Calculate new mu for daughter1
+             var mu2 = mu_0 * multip2                                   // Calculate new mu for daughter2
+           display("Spec")
+            display([epsilon, mu1/lambda1, mu2/lambda2])
+        return([lambda1, lambda2, multip1, multip2, mu1, mu2])
       }
  }
 
 
-var M_cladsplusGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M, shift, multip )
+var M_clad2s2plus_m_shiftGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M, shift, multip, mu_0, mu )
 {
     if ( max_M == 0 ) return NaN
     // We need to survive twice
-    if (!cladsplusGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip ) &&
-	!cladsplusGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )) return 1
-    else return(1 + M_cladsplusGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M - 1, shift, multip ))
+    if (!clads2plus_m_shiftGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu ) &&
+	!clads2plus_m_shiftGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu )) return 1
+    else return(1 + M_clads2plus_m_shiftGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M - 1, shift, multip, mu_0, mu ))
 }
 
 
 
 // Forward simulation from a starting time, returning whether the lineage
 // goes undetected or extinct (true) or not (false)
-var cladsplusGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+var clads2plus_m_shiftGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu )
 {
-    var mu = epsilon * lambda
+   // var mu = epsilon * lambda
 
     // extreme values patch 1/2
     if ( lambda - mu > MAX_DIV )
@@ -90,23 +96,25 @@ var cladsplusGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigm
 
     // Speciation; first get values for daughter lineages and then recurse
 
-    var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip)
+    var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon))
     var lambda1 = decision[0]
     var lambda2 = decision[1]
     var multip1 = decision[2]
     var multip2 = decision[3]
+    var mu1 = decision[4]
+    var mu2 = decision[5]
 
-    return ( cladsplusGoesUndetected( currentTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1 )
-          && cladsplusGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 ) )
+    return ( clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1, mu_0, mu1 ) )
+          && clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2, mu_0, mu2 ) ) )
 }
 
 
 
 // Simulation function for Cladsplus model with random sampling"
-var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+var simClaDS2plus_m_shift = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu )
 {
     // Simulate process along a branch
-    var simBranch = function( startTime, stopTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+    var simBranch = function( startTime, stopTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu )
     {
 	var t1 = startTime - stopTime
 	// Compute mu for this interval
@@ -143,20 +151,22 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
 	// We have a speciation event; handle this case
 	// We arbitrarily assume that lambda1 applies to the surviving lineage
 	// and lambda2 to the extinct side lineage.
-        var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip)
+        var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon)
         var lambda1 = decision[0]
         var lambda2 = decision[1]
         var multip1 = decision[2]
         var multip2 = decision[3]
+        var mu1 = decision[4]
+        var mu2 = decision[5]
 
 
-	var sideUndetected = cladsplusGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
+	var sideUndetected = clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2, mu_0, mu2 )
 	if ( sideUndetected == false )   // means detected and not extinct
             return [ 0.0, 0.0, -Infinity ]
 
 	// Return probability from recursion plus factor 2 because we
 	// do not care whether extinction is on left or right side branch
-	var ret = simBranch( currentTime, stopTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1 )
+	var ret = simBranch( currentTime, stopTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1, mu_0, mu1 )
 	return [ ret[0], ret[1] + lambda*t, ret[2] + Math.log( 2.0 ) - mu*t ]
     }
 
@@ -168,15 +178,17 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
 	if ( parent == null )
 	{
 	    
-        var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip)
+        var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon)
 	    var lambda1 = decision[0]
 	    var lambda2 = decision[1]
         var multip1 = decision[2]
         var multip2 = decision[3]
+        var mu1 = decision[4]
+        var mu2 = decision[5]
 
 	    // Recursive call under diversification rates
-            var subtree1 = simTree( tree.left,  tree, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1 )
-            var subtree2 = simTree( tree.right, tree, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
+            var subtree1 = simTree( tree.left,  tree, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1, mu_0, mu1 )
+            var subtree2 = simTree( tree.right, tree, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2, mu_0, mu2 )
 
             // Return total subtree with diversification info attached as an 'extended newick' character string
             var nodeInfo = '[&lambda=' + lambda + ',mu=' + epsilon*lambda + ']'
@@ -205,15 +217,17 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
 	if ( tree.type == 'node' )
 	{
 	    
-        var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip)
+        var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon)
         var lambda1 = decision[0]
         var lambda2 = decision[1]
         var multip1 = decision[2]
         var multip2 = decision[3]
+        var mu1 = decision[4]
+        var mu2 = decision[5]
 
 	    // Get daughter rates and then recurse
-            var subtree1 = simTree( tree.left,  tree, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1 )
-            var subtree2 = simTree( tree.right,  tree, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
+            var subtree1 = simTree( tree.left,  tree, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1, mu_0, mu1  )
+            var subtree2 = simTree( tree.right,  tree, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2, mu_0, mu2  )
 	    
             // Return total subtree with diversification info attached as an 'extended newick' character string
             return '(' + subtree1 + ',' + subtree2 + ')' + nodeInfo + ':' + length + branchInfo
