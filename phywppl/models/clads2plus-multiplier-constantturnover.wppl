@@ -1,5 +1,5 @@
 /** 
- * M Iterations to Survive, ClaDS+ Model
+ * M Iterations to Survive, ClaDS2+ Model with multipliers and constant turnover
  *  
  * Computes M, the number of simulations needed to generate a lineage surviving
  * to the present.
@@ -18,7 +18,7 @@
  * @return M
  */
  
- var speciation_decisions = function(lambda_0, lambda, alpha, sigma, shift, multip)
+ var speciation_decisions1 = function(lambda_0, lambda, alpha, sigma, shift, multip)
   {
   var outcome = flip(shift)            // Is there going to be a large shift?
      if (outcome == true) {               // Yes, large shift
@@ -39,20 +39,20 @@
  }
 
 
-var M_cladsplusGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M, shift, multip )
+var M_clads2plus_m_constGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M, shift, multip )
 {
     if ( max_M == 0 ) return NaN
     // We need to survive twice
-    if (!cladsplusGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip ) &&
-	!cladsplusGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )) return 1
-    else return(1 + M_cladsplusGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M - 1, shift, multip ))
+    if (!clads2plus_m_constGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip ) &&
+	!clads2plus_m_constGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )) return 1
+    else return(1 + M_clads2plus_m_constGoesUndetected( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M - 1, shift, multip ))
 }
 
 
 
 // Forward simulation from a starting time, returning whether the lineage
 // goes undetected or extinct (true) or not (false)
-var cladsplusGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+var clads2plus_m_constGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
 {
     var mu = epsilon * lambda
 
@@ -90,20 +90,20 @@ var cladsplusGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigm
 
     // Speciation; first get values for daughter lineages and then recurse
 
-    var decision = speciation_decisions(lambda_0, lambda, alpha, sigma, shift, multip)
+    var decision = speciation_decisions1(lambda_0, lambda, alpha, sigma, shift, multip)
     var lambda1 = decision[0]
     var lambda2 = decision[1]
     var multip1 = decision[2]
     var multip2 = decision[3]
 
-    return ( cladsplusGoesUndetected( currentTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1 )
-          && cladsplusGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 ) )
+    return ( clads2plus_m_constGoesUndetected( currentTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1 )
+          && clads2plus_m_constGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 ) )
 }
 
 
 
 // Simulation function for Cladsplus model with random sampling"
-var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+var simClaDS2plus_m_const = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
 {
     // Simulate process along a branch
     var simBranch = function( startTime, stopTime, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
@@ -143,14 +143,14 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
 	// We have a speciation event; handle this case
 	// We arbitrarily assume that lambda1 applies to the surviving lineage
 	// and lambda2 to the extinct side lineage.
-        var decision = speciation_decisions(lambda_0, lambda, alpha, sigma, shift, multip)
+        var decision = speciation_decisions1(lambda_0, lambda, alpha, sigma, shift, multip)
         var lambda1 = decision[0]
         var lambda2 = decision[1]
         var multip1 = decision[2]
         var multip2 = decision[3]
 
 
-	var sideUndetected = cladsplusGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
+	var sideUndetected = clads2plus_m_constGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2 )
 	if ( sideUndetected == false )   // means detected and not extinct
             return [ 0.0, 0.0, -Infinity ]
 
@@ -168,7 +168,7 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
 	if ( parent == null )
 	{
 	    
-        var decision = speciation_decisions(lambda_0, lambda, alpha, sigma, shift, multip)
+        var decision = speciation_decisions1(lambda_0, lambda, alpha, sigma, shift, multip)
 	    var lambda1 = decision[0]
 	    var lambda2 = decision[1]
         var multip1 = decision[2]
@@ -205,7 +205,7 @@ var simClaDSplus = function( tree, lambda_0, lambda, alpha, sigma, epsilon, rho,
 	if ( tree.type == 'node' )
 	{
 	    
-        var decision = speciation_decisions(lambda_0, lambda, alpha, sigma, shift, multip)
+        var decision = speciation_decisions1(lambda_0, lambda, alpha, sigma, shift, multip)
         var lambda1 = decision[0]
         var lambda2 = decision[1]
         var multip1 = decision[2]

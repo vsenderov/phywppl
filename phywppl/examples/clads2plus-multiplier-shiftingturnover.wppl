@@ -1,11 +1,9 @@
 /**
- * ClaDS+
+ * ClaDS2+ with multipliers and with a turnover that changes at large rate shifts
  *
  * To run the example use:
  *
- * npm run wppl examples/cladsplus.wppl [N] [TREEPATH] [RHO] [NPART]
- * example:
- * npm run wppl examples/cladsplus.wppl 1 ../data/bisse_32.phyjson 1 500
+ * npm run wppl examples/clads2plus-multiplier-shiftingturnover.wppl [N] [TREEPATH] [RHO] [NPART]
  *
  * where [N] is the number of iterations, for example 3
  *       [TREEPATH] path to phyjson tree
@@ -28,14 +26,23 @@ var MIN_LAMBDA = 1e-6
 var model = function()
 {
     
-    // Test settings - fixed parameters
-    var lambda_0 = 0.2              //Sample from Gamma dist
-    var mu_0 = 0.1                  //Sample from Gamma dist
-    var sigma = 0.1                //Sample from normal-inverse-gamma distribution
-    var alpha =   Math.log(0.95)             //Sample from normal-inverse-gamma distribution
-    var shift  = 0.0000001          //Sample from Beta dist OR set to 0.001
-    var epsilon  = mu_0 / lambda_0  //Constant turn-over rate
-    var multip  = 1                 //Starting at 1
+    // Test settings to compare with CRBD
+    var lambda_0 = 0.2
+    var mu_0 = 0.1
+    var sigma = 0.0000001
+    var alpha =   Math.log(1)
+    var shift  = 0.0000001
+    var epsilon  = mu_0 / lambda_0
+    var multip  = 1
+    
+    // Settings
+    // var lambda_0 = 0.2              //Sample from Gamma dist
+    // var mu_0 = 0.1                  //Sample from Gamma dist
+    // var sigma = 0.0000001           //Sample from normal-inverse-gamma distribution
+    // var alpha =   Math.log(1)       //Sample from normal-inverse-gamma distribution
+    // var shift  = 0.001              //Sample from Beta dist OR set to 0.001
+    // var epsilon  = mu_0 / lambda_0  //
+    // var multip  = 1                 //Starting at 1
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
