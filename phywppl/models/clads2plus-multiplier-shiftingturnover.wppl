@@ -28,8 +28,8 @@
              var lambda2 = lambda_0 * multip2                     // Calculate new lambda for daughter2
              var mu1 = mu_0 * multip1                             // Calculate new mu for daughter1
              var mu2 = mu_0 * multip2                             // Calculate new mu for daughter2
-            display("Spec shift")
-            display([epsilon, mu1/lambda1, mu2/lambda2])
+//            display("Spec shift")
+//            display([epsilon, mu1/lambda1, mu2/lambda2])
          return([lambda1, lambda2, multip1, multip2, mu1, mu2])
              } else {                     // No large shift
              var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw AND calc new multiplier set for daughter1
@@ -38,14 +38,14 @@
              var lambda2 = lambda_0 * multip2                                // Calculate new lambda for daughter2
              var mu1 = mu_0 * multip1                                   // Calculate new mu for daughter1
              var mu2 = mu_0 * multip2                                   // Calculate new mu for daughter2
-           display("Spec")
-            display([epsilon, mu1/lambda1, mu2/lambda2])
+   //        display("Spec")
+  //          display([epsilon, mu1/lambda1, mu2/lambda2])
         return([lambda1, lambda2, multip1, multip2, mu1, mu2])
       }
  }
 
 
-var M_clad2s2plus_m_shiftGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M, shift, multip, mu_0, mu )
+var M_clads2plus_m_shiftGoesUndetected = function( startTime, lambda_0, lambda, alpha, sigma, epsilon, rho, max_M, shift, multip, mu_0, mu )
 {
     if ( max_M == 0 ) return NaN
     // We need to survive twice
@@ -96,7 +96,7 @@ var clads2plus_m_shiftGoesUndetected = function( startTime, lambda_0, lambda, al
 
     // Speciation; first get values for daughter lineages and then recurse
 
-    var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon))
+    var decision = speciation_decisions2(lambda_0, lambda, alpha, sigma, shift, multip, mu_0, mu, epsilon)
     var lambda1 = decision[0]
     var lambda2 = decision[1]
     var multip1 = decision[2]
@@ -104,8 +104,8 @@ var clads2plus_m_shiftGoesUndetected = function( startTime, lambda_0, lambda, al
     var mu1 = decision[4]
     var mu2 = decision[5]
 
-    return ( clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1, mu_0, mu1 ) )
-          && clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2, mu_0, mu2 ) ) )
+    return ( clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda1, alpha, sigma, epsilon, rho, shift, multip1, mu_0, mu1 )
+          && clads2plus_m_shiftGoesUndetected( currentTime, lambda_0, lambda2, alpha, sigma, epsilon, rho, shift, multip2, mu_0, mu2  ) )
 }
 
 
@@ -172,7 +172,7 @@ var simClaDS2plus_m_shift = function( tree, lambda_0, lambda, alpha, sigma, epsi
 
     
     // Simulate process along a tree
-    var simTree = function( tree, parent, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+    var simTree = function( tree, parent, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu )
     {
 	
 	if ( parent == null )
@@ -196,7 +196,7 @@ var simClaDS2plus_m_shift = function( tree, lambda_0, lambda, alpha, sigma, epsi
 	}
 
 	// Simulate process along branch leading to node 
-	var ret = simBranch( parent.age, tree.age, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip )
+	var ret = simBranch( parent.age, tree.age, lambda_0, lambda, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu )
 	var lambdaEnd = ret[0]
 	
 	// Factor in the accumulated probability weight, plus speciation weight at end of branch
@@ -246,7 +246,7 @@ var simClaDS2plus_m_shift = function( tree, lambda_0, lambda, alpha, sigma, epsi
     factor( corrFactor )
 
     // Simulate conditionally on the tree
-    var tree = simTree( tree, null, lambda_0, lambda_0, alpha, sigma, epsilon, rho, shift, multip  )
+    var tree = simTree( tree, null, lambda_0, lambda_0, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu_0 )
     
     // Return model parameters and tree that contains the lineage-specific parameters of interest
     return [ lambda_0, alpha, sigma, epsilon, tree ]
