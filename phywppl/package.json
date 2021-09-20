@@ -17,7 +17,8 @@
          "models/clads2m.wppl",
          "models/clads2m-both.wppl",
          "models/cladsplus.wppl",
-         "models/bamm.wppl"
+          "models/bamm.wppl",
+	  "models/anads2.wppl"
       ]
    },
    "scripts": {

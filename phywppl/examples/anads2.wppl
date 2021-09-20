@@ -1,0 +1,45 @@
+/**
+ * AnaDS2
+ *
+ * To run the example use:
+ *
+ * npm run wppl examples/anads2.wppl [N] [TREEPATH] [RHO] [NPART]
+ * example:
+ * npm run wppl examples/anads2.wppl 1 ../data/bisse_32.phyjson 1 500
+ *
+ * where [N] is the number of iterations, for example 3
+ *       [TREEPATH] path to phyjson tree
+ *       [RHO] sampling probability
+ *       [NPART] number of particles
+ *
+ */
+  
+var tree = phyjs.read_phyjson(argv["_"][1])
+var rho = argv["_"][2]
+var particles = argv["_"][3]
+
+var MAX_MULTIPLIER = 1e5
+var MIN_MULTIPLIER = 1e-5
+
+var model = function()
+{
+    var lambda_0 = gamma( {shape: 1, scale: 1} )
+    var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
+    var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+    var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    var upsilon = 1.0
+    var multiplier = 1.0
+    
+    var ret = simAnads2( tree, lambda_0, alpha, sigma, epsilon, rho, upsilon, multiplier )
+
+    // No Condition on detection
+    
+    return ret
+}
+
+
+/**
+ * Inference
+  */
+var dist = Infer({method: 'SMC', particles: particles, model: model})
+dist.normalizationConstant
