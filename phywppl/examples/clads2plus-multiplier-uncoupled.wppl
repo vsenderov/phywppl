@@ -32,7 +32,6 @@ var model = function()
     var sigma = 0.0000001
     var alpha =   Math.log(1)
     var shift  = 0.0000001
-    var epsilon  = mu_0 / lambda_0
     var multip  = 1
     
     // Settings
@@ -41,16 +40,15 @@ var model = function()
     // var sigma = 0.0000001           //Sample from normal-inverse-gamma distribution
     // var alpha =   Math.log(1)       //Sample from normal-inverse-gamma distribution
     // var shift  = 0.001              //Sample from Beta dist OR set to 0.001
-    // var epsilon  = mu_0 / lambda_0  //
     // var multip  = 1                 //Starting at 1
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
-    var ret = simClaDS2plus_m_shift( tree, lambda_0, lambda_0, alpha, sigma, epsilon, rho, shift, multip, mu_0, mu_0)
+    var ret = simClaDS2plus_m_shift( tree, lambda_0, lambda_0, alpha, sigma, rho, shift, multip, mu_0, mu_0)
 
     // Condition on detection
         var max_M = 10000
-        var M = M_clads2plus_m_shiftGoesUndetected( tree.age, lambda_0, lambda_0, alpha, sigma, epsilon, rho, max_M, shift, multip, mu_0, mu_0)
+        var M = M_clads2plus_m_shiftGoesUndetected( tree.age, lambda_0, lambda_0, alpha, sigma, rho, max_M, shift, multip, mu_0, mu_0)
         factor(Math.log(M))
     
     return ret
