@@ -2,7 +2,7 @@
 
 ## Running phylogenetic WebPPL code
 
-All WebPPL programs and R scripts from the paper can be run from the shell with the tools that are found in the repository. We assume that it has been [downloaded and the tools have been installed](../../README.md). To run programs from the shell, first set your working directory to `webppl/phywppl`. Two npm commands have been provided for running WebPPL code:
+All WebPPL programs and R scripts from the paper can be run from the shell with the tools that are found in the repository. We assume that it has been [downloaded and the tools have been installed](../../README.md). To run programs from the shell, first set your working directory to `phywppl/phywppl`. Two npm commands have been provided for running WebPPL code:
 
 1. `npm run wppl` to run a single WebPPL probabilistic program.
 2. `npm run sim` to run a set of related probabilistic programs (experiment).
@@ -12,10 +12,10 @@ All WebPPL programs and R scripts from the paper can be run from the shell with 
 A `phywppl` program is a text file with the `.wppl` extension containing a regular WebPPL probabilistic program. To execute such a program, you may use the following syntax in the shell (accessible only in the `phywppl` package directory):
 
 ```
-npm run wppl EXAMPLE [N]
+ npm run wppl EXAMPLE [N] [TREEPATH] [RHO] [NPART]
 ```
 
-Here, `EXAMPLE` is the path to the program that will be executed, and  `[N]` is an optional integer (< 64) specifying the number of times the program should be executed. We refer to the `N` independent executions of the program as runs or sometimes replicates; they are not to be confused with the number of particles in SMC inference. The default value is `1`. If you want to run many analyses in parallel on your working computer, it is advisable to set `N` to the number of cores of your system minus 1 or 2 depending on how responsive you would like your system to be while the replicates are running.
+Here, `EXAMPLE` is the path to the program that will be executed, and  `[N]` is an optional integer (< 64) specifying the number of times the program should be executed. We refer to the `N` independent executions of the program as runs or sometimes replicates; they are not to be confused with the number of particles in SMC inference. The default value is `1`. If you want to run many analyses in parallel on your working computer, it is advisable to set `N` to the number of cores of your system minus 1 or 2 depending on how responsive you would like your system to be while the replicates are running. [TREEPATH] is the path to a phyjson tree. [RHO] is the sampling probability, and [NPART] the number of particles used for the inference. 
 
 In addition to all language constructs available through WebPPL (and JavaScript), `run wppl` makes available to the program all functions in any of the files in the directory `webppl/phywppl/models`, in particular all the conditional simulations, such as `simCRBD`, a function for simulating the constant rate birth death (CRBD) model. In addition, a second phylogenetic package, `phyjs`, is also included automatically. It offers several JavaScript functions for handling phylogenetic data, such as `phyjs.read_phyjson()`. Finally, as phylogenetic probabilistic programs require a large amount of heap space to be allocated, the run-command makes sure that this memory is available to Node.
 
@@ -26,10 +26,10 @@ The code in this file sets up the priors and selects the data to condition the s
 To run the program from the command line in the environment we provide, you can, for instance, type: 
 
 ```
-npm run wppl examples/crbd.wppl 10
+npm run wppl examples/crbd.wppl 10 ../data/bisse_32.phyjson 1 5000
 ```
 
-This will run the program independently 10 times.
+This will run the program independently 10 times, with sampling probablílity 1 and 5000 particles. The tree path is ../data/bisse_32.phyjson
 
 Each time, the program samples the posterior probability distribution and returns the parameters of interest.
 
@@ -38,7 +38,7 @@ Each time, the program samples the posterior probability distribution and return
 Sometimes it is necessary to repeatedly run a probabilistic program with some minimal changes: for example, to process different phylogenetic trees with the same model, explore several inference strategies, or change other model parameters. For this reason we have provided another npm command `npm run sim`, which processes a JSON file (a text file in JSON format) that sets up an array of related probabilistic programs and runs them. To invoke processing of the JSON file, you use
 
 ```
-npm run sim SIMULATION [N]
+npm run sim SIMULATION [N] [TREEPATH] [RHO] [NPART]
 ```
 
 where `SIMULATION` is the path to the JSON script. The JSON script specifying a simulation experiment has the following format (example):

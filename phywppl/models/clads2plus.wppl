@@ -1,5 +1,5 @@
 /** 
- * M Iterations to Survive, ClaDS2 Model with modification: small probability of large shift in lambda at speciation
+ * M Iterations to Survive, ClaDS2+ Model with a constant turnover
  *  
  * Computes M, the number of simulations needed to generate a lineage surviving
  * to the present.
@@ -16,30 +16,34 @@
  * @return M
  */
  
- var lambda_chooserNew = function(lambda, alpha, sigma, pshift)
-{
+var speciation_decisions3 = function(lambda,alpha,sigma,pshift){
 var outcome = flip(pshift)
-	if (outcome == true) {
-		return (exponential( {a:1} )	 ) 
-	    	} else {
-			return (Math.exp(gaussian({mu:Math.log(alpha*lambda),sigma:sigma})))
-	 }
-}
+if (outcome == true) {
+ var lambda1 =  exponential( {a:1} )
+  var lambda2 = exponential( {a:1} )
+  return([lambda1,lambda2])
+     } else {
+        var lambda1 = Math.exp(gaussian({mu:Math.log(alpha*lambda),sigma:sigma}))
+        var lambda2 = Math.exp(gaussian({mu:Math.log(alpha*lambda),sigma:sigma}))
+          return([lambda1,lambda2])
+        }
+  }
  
-var M_clads2mbothGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, max_M, pshift)
+ 
+var M_clads2plus_constGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, max_M, pshift)
 {
     if ( max_M == 0 ) return NaN
     // We need to survive twice
-    if (!clads2mbothGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift ) &&
-	!clads2mbothGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift )) return 1
-    else return(1 + M_clads2mbothGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, max_M - 1, pshift ))
+    if (!clads2plus_constGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift ) &&
+	!clads2plus_constUndetected( startTime, lambda, alpha, sigma, epsilon, rho, pshift )) return 1
+    else return(1 + M_clads2plus_constGoesUndetected( startTime, lambda, alpha, sigma, epsilon, rho, max_M - 1, pshift ))
 }
 
 
 
 // Forward simulation from a starting time, returning whether the lineage
 // goes undetected or extinct (true) or not (false)
-var clads2mbothGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, pshift)
+var clads2plus_constGoesUndetected = function( startTime, lambda, alpha, sigma, epsilon, rho, pshift)
 {
     var mu = epsilon * lambda
 
@@ -76,16 +80,19 @@ var clads2mbothGoesUndetected = function( startTime, lambda, alpha, sigma, epsil
         return true 
 
     // Speciation; first draw values for daughter lineages and then recurse
-    var lambda1 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-    var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-    return ( clads2mbothGoesUndetected( currentTime, lambda1, alpha, sigma, epsilon, rho, pshift )
-          && clads2mbothGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift ) )
+    //Speciation: will there be a large shift or not?
+    var speciation = speciation_decisions3(lambda,alpha,sigma,pshift)
+    var lambda1 = speciation[0]
+    var lambda2 = speciation[1]
+
+    return ( clads2plus_constGoesUndetected( currentTime, lambda1, alpha, sigma, epsilon, rho, pshift )
+          && clads2plus_constGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift ) )
 }
 
 
 
 // Simulation function for Clads2 model with random sampling"
-var simClaDS2mboth = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
+var simClaDS2plus_const = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift)
 {
     // Simulate process along a branch
     var simBranch = function( startTime, stopTime, lambda, alpha, sigma, epsilon, rho, pshift)
@@ -125,9 +132,11 @@ var simClaDS2mboth = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift
 	// We have a speciation event; handle this case
 	// We arbitrarily assume that lambda1 applies to the surviving lineage
 	// and lambda2 to the extinct side lineage.
-	var lambda1 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-	var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
-	var sideUndetected = clads2mbothGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift )
+ //Speciation: will there be a large shift or not?
+    var speciation = speciation_decisions3(lambda,alpha,sigma,pshift)
+    var lambda1 = speciation[0]
+    var lambda2 = speciation[1]
+	var sideUndetected = clads2plus_constGoesUndetected( currentTime, lambda2, alpha, sigma, epsilon, rho, pshift )
 	if ( sideUndetected == false )   // means detected and not extinct
             return [ 0.0, 0.0, -Infinity ]
 
@@ -141,16 +150,19 @@ var simClaDS2mboth = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift
     // Simulate process along a tree
     var simTree = function( tree, parent, lambda, alpha, sigma, epsilon, rho, pshift)
     {
-	var lambda_chooser = function(lambda, lambdaEnd, alpha, sigma)
-	{
-		return (Math.exp(gaussian({mu:Math.log(alpha*lambdaEnd),sigma:sigma})))
-	}
+//	var lambda_chooser = function(lambda, lambdaEnd, alpha, sigma)
+//	{
+//		return (Math.exp(gaussian({mu:Math.log(alpha*lambdaEnd),sigma:sigma})))
+//	}
 
 	if ( parent == null )
 	{
 	    
-	    var lambda1 =  lambda_chooserNew(lambda, alpha, sigma, pshift)
-	    var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
+ //Speciation: will there be a large shift or not?
+    var speciation = speciation_decisions3(lambda,alpha,sigma,pshift)
+    var lambda1 = speciation[0]
+    var lambda2 = speciation[1]
+
 
 	    // Recursive call under diversification rates
             var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, epsilon, rho, pshift )
@@ -183,8 +195,10 @@ var simClaDS2mboth = function( tree, lambda0, alpha, sigma, epsilon, rho, pshift
 	if ( tree.type == 'node' )
 	{
 	    
-	    var lambda1 = lambda_chooserNew(lambdaEnd, alpha, sigma, pshift)
-	    var lambda2 = lambda_chooserNew(lambda, alpha, sigma, pshift)
+ //Speciation: will there be a large shift or not?
+    var speciation = speciation_decisions3(lambda,alpha,sigma,pshift)
+    var lambda1 = speciation[0]
+    var lambda2 = speciation[1]
 
 	    // Get daughter rates and then recurse
             var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, epsilon, rho, pshift )

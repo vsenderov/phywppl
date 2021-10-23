@@ -1,10 +1,10 @@
 /** 
- * ClaDS2m
- * Modified version with small probability of large shift in lambda at speciation, for one daughter line
+ * ClaDS2+ with a constant turnover
+ * 
  * 
  * To run the example use:
  * 
- * npm run wppl examples/clads2m.wppl [N] [TREEPATH] [RHO] [NPART]
+ * npm run wppl examples/clads2plus-constantturnover.wppl [N] [TREEPATH] [RHO] [NPART]
  *
  * where [N] is the number of iterations, for example 3
  *       [TREEPATH] path to phyjson tree
@@ -28,28 +28,28 @@ var MIN_LAMBDA = 1e-6
 var model = function()
 {
     
-    // Test settings to compare with analytical CRBD
+    // Test settings to compare with CRBD
     var lambda_0 = 0.2
-    var sigma = 0.1
-    var alpha =   0.95
-    var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    var sigma = 0.0000001
+    var alpha =   1
+    var epsilon  = 0.5
     
     // Settings
-        // var lambda_0 = 0.2
-        // var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
-        // var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
-        // var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
+    // var lambda_0 = 0.2
+    // var sigma = Math.sqrt( 1/gamma( { shape: 1, scale: 1/0.2 } ) )
+    // var alpha =   Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+    // var epsilon  = 0.5   // Corresponds to mu = epsilon*lambda = 0.1
     
     //New variable: probability of large shift at speciation. If 0, collapses to ClaDS2 model.
-    var pshift = 0.0
+    var pshift = 0.001
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
-    var ret = simClaDS2m( tree, lambda_0, alpha, sigma, epsilon, rho, pshift)
+    var ret = simClaDS2plus_const( tree, lambda_0, alpha, sigma, epsilon, rho, pshift)
     
     // Condition on detection
     var max_M = 10000
-    var M = M_clads2mGoesUndetected( tree.age, lambda_0, alpha, sigma, epsilon, rho, max_M, pshift)
+    var M = M_clads2plus_constGoesUndetected( tree.age, lambda_0, alpha, sigma, epsilon, rho, max_M, pshift)
     factor(Math.log(M))
     return ret
 }

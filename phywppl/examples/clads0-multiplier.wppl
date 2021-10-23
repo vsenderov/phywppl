@@ -3,7 +3,7 @@
  *
  * To run the example use:
  *
- * npm run wppl examples/clads0multip.wppl [N] [TREEPATH] [RHO] [NPART]
+ * npm run wppl examples/clads0-multiplier.wppl [N] [TREEPATH] [RHO] [NPART]
  *
  * where [N] is the number of iterations, for example 3
  *       [TREEPATH] path to phyjson tree
