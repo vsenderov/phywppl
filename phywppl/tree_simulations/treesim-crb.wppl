@@ -2,11 +2,20 @@
  * Simulation from startTime to the present under CRB, returns Tree in Newick format
  * NO GUARDS
  *
- * Adjust parameter settings and output file below
- * Run with:
- * webppl treesim-crb.wppl --require webppl-fs
+ * To run the simulation use:
+ * npm run wppl tree_simulations/treesim-crb.wppl [N] [OUTPUT_FILENAME] [TREEAGE] [LAMBDA]
+ *
+ * where [N] is the number of iterations, for example 3
+ *       [OUTPUT_FILENAME] path to output file
+ *       [TreeAge] Tree age
+ *       [LAMBDA] value of lambda in simulation
  *
  */
+
+var filename = argv["_"][1]
+var treeage = argv["_"][2]
+var lambda = argv["_"][3]
+
 
 var crbTreeSimulate= function( startTime, lambda, filename )
 {
@@ -23,7 +32,8 @@ var crbTreeSim= function( startTime, lambda )
     var currentTime = startTime - t;     //Calculate time of event
 
     if ( currentTime < 0 ) {                 // If we have reached the present
-    var NewickTree = ':' + startTime ;      // Make start on tree
+    var Label = uniform(0,1) + ':';            // Set random label to leaf node
+    var NewickTree = Label + startTime ;      // Make start on tree
     return NewickTree;
     }
     
@@ -37,4 +47,4 @@ var crbTreeSim= function( startTime, lambda )
 }
 
 
-crbTreeSimulate(10,0.2,"Output/test.txt")
+crbTreeSimulate(treeage, lambda, filename)

@@ -2,11 +2,21 @@
  * Simulation from startTime to the present under CRBD, returns observed Tree (without extinctions)
  * NO GUARDS
  *
- * Adjust parameter settings and output file below
- * Run with:
- * webppl treesim-crbd.wppl --require webppl-fs
+ *
+ * To run the simulation use:
+ * npm run wppl tree_simulations/treesim-crb.wppl [N] [OUTPUT_FILENAME] [TREEAGE] [LAMBDA]
+ *
+ * where [N] is the number of iterations, for example 3
+ *       [OUTPUT_FILENAME] path to output file
+ *       [TreeAge] Tree age
+ *       [LAMBDA] value of lambda in simulation
  *
  */
+
+var filename = argv["_"][1]
+var treeage = argv["_"][2]
+var lambda = argv["_"][3]
+var mu = 0.05
 
 var crbdTreeSimulate= function( startTime, lambda, mu, filename )
 {
@@ -26,7 +36,8 @@ var crbdTreeSim= function( startTime, lambda, mu )
     var t = exponential( {a: lambda + mu} ); //Draw a waiting time
     var currentTime = startTime - t;     //Calculate time of event
     if ( currentTime < 0 ) {                 // If we have reached the present
-        var NewickTree = [':' , startTime] ;      // Make start on tree
+        var Label = uniform(0,1) + ':';            // Set random label to leaf node
+        var NewickTree = [Label , startTime] ;      // Make start on tree
         return NewickTree;
     }
     else {                                          // Otherwise we have an event
@@ -59,4 +70,4 @@ var crbdTreeSim= function( startTime, lambda, mu )
     }
 }
 
-crbdTreeSimulate(10,0.2,0.05,"Output/test.txt")
+crbdTreeSimulate(treeage, lambda, mu, filename)
