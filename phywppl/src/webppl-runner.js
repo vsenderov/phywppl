@@ -31,7 +31,7 @@ const DEFAULT_TREE = "src/bisse_32.phyjson"
 const DEFAULT_RHO = 1.0
 const DEFAULT_NPART = 5000
 require('events').EventEmitter.defaultMaxListeners = MAX_ITERATIONS;
-
+var fs = require('fs')
 
 // Variables
 var phylomodels // the model package directory
@@ -145,10 +145,10 @@ executable = file.dir.replace(/[\/\\]/g, "_" ) + "_" + file.name + ".js"
 var shell = require('shelljs')
 var compile_command
 if (process.platform == "win32") {
-    compile_command = "webppl " + webppl + " --require " + phylomodels + " --require " + phylodata + " --compile --out " + js + "/" + executable +  "> nul "
+    compile_command = "webppl " + webppl + " --require webppl-fs" + " --require " + phylomodels + " --require " + phylodata + " --compile --out " + js + "/" + executable +  "> nul "
 }
 else {
-    compile_command = "webppl " + webppl + " --require " + phylomodels + " --require " + phylodata + " --compile --out " + js + "/" + executable + " 1>/dev/null"
+    compile_command = "webppl " + webppl + " --require webppl-fs" + " --require " + phylomodels + " --require " + phylodata + " --compile --out " + js + "/" + executable + " 1>/dev/null"
 }
 shell.config.silent = true;
 shell.rm(js + "/" + executable)
@@ -159,7 +159,7 @@ shell.exec(compile_command)
 
 //Execution
  exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=4096 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
- console.log(exec_command)
+// console.log(exec_command)
 
  for (i = 0; i < iterations; i++) {
      shell.exec(exec_command, {async:true} )

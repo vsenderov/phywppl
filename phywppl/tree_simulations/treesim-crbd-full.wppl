@@ -1,0 +1,63 @@
+/**
+ * Simulation from startTime to the present under CRBD, returns Tree including extinct lineages
+ * NO GUARDS
+ *
+ *
+ * To run the simulation use:
+ * npm run wppl tree_simulations/treesim-crb.wppl [N] [OUTPUT_FILENAME] [TREEAGE] [LAMBDA]
+ *
+ * where [N] is the number of iterations, for example 3
+ *       [OUTPUT_FILENAME] path to output file
+ *       [TreeAge] Tree age
+ *       [LAMBDA] value of lambda in simulation
+ *
+ */
+
+var filename = argv["_"][1]
+var treeage = argv["_"][2]
+var lambda = argv["_"][3]
+var mu = 0.05
+
+
+var crbdTreeSimulateFull= function( startTime, lambda, mu, filename )
+{
+    var Tree = crbdTreeSimF( startTime, lambda, mu );
+    if (Tree == false) {
+        return("No survivors")
+    }
+    else {
+        var Tree = Tree + ';' ;
+        fs.write(filename, Tree);
+        return Tree
+    }
+}
+
+
+var crbdTreeSimF= function( startTime, lambda, mu )
+{
+    var t = exponential( {a: lambda + mu} ); //Draw a waiting time
+    var currentTime = startTime - t;     //Calculate time of event
+    if ( currentTime < 0 ) {                 // If we have reached the present
+        var Label = uniform(0,1) + ':';            // Set random label to leaf node
+        var NewickTree = Label + startTime ;      // Make start on tree, add final branch to present
+        return NewickTree;
+    }
+    else {                                              // Otherwise we have an event
+        var internalBranch = startTime - currentTime;    // Calculate length of internal branch leading up to event
+        var speciation = flip( lambda/(lambda+mu) )      // Speciation or extinction?
+        if ( speciation == true ) {                            //Speciation event
+            var internalBranch = startTime - currentTime;                   // Calculate length of internal branch leading up to speciation event
+            var leftTree  = crbdTreeSimF( currentTime, lambda, mu );       // Get back two Newick strings, partial trees
+            var rightTree = crbdTreeSimF( currentTime, lambda, mu );      // Get back two Newick strings, partial trees
+            var NewickTree = '(' + leftTree +',' + rightTree + ')' + ':' + internalBranch ;          // Merge trees
+            return NewickTree ;
+        }
+        else {                                          // Extinction event
+            var NewickTree = ':' + internalBranch ;      // Make start on tree, from branch that went extinct
+            return NewickTree;
+        }
+    }
+}
+
+
+crbdTreeSimulateFull(treeage, lambda, mu, filename)
