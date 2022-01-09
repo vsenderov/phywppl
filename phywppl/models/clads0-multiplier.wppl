@@ -14,30 +14,20 @@
  * @return M
  */
  
- var speciation_decisions = function(lambda, alpha, sigma, multip)
-  {
-        display("speciation")
-        var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
-        var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
-        var lambda1 = lambda_0 * multip1                                // Calculate new lambda for daughter1
-        var lambda2 = lambda_0 * multip2                                // Calculate new lambda for daughter2
-        display([lambda1, lambda2, multip1, multip2])
-        return([lambda1, lambda2, multip1, multip2])
- }
  
-var M_clads0multipGoesUndetected = function( startTime, lambda, alpha, sigma, rho, max_M, multip )
+var M_clads0multipGoesUndetected = function( startTime, lambda0, lambda, alpha, sigma, rho, max_M, multip )
 {
     if ( max_M == 0 ) return NaN
     // We need to survive twice
-    if (!clads0multipGoesUndetected( startTime, lambda, alpha, sigma, rho, multip ) &&
-	!clads0multipGoesUndetected( startTime, lambda, alpha, sigma, rho, multip )) return 1
-    else return(1 + M_clads0multipGoesUndetected( startTime, lambda, alpha, sigma, rho, max_M - 1, multip ))
+    if (!clads0multipGoesUndetected( startTime, lambda0, lambda, alpha, sigma, rho, multip ) &&
+	!clads0multipGoesUndetected( startTime, lambda0, lambda, alpha, sigma, rho, multip )) return 1
+    else return(1 + M_clads0multipGoesUndetected( startTime, lambda0, lambda, alpha, sigma, rho, max_M - 1, multip ))
 }
 
 
 // Forward simulation from a starting time, returning whether the lineage goes
 // undetected (true) or is detected (false)
-var clads0multipGoesUndetected = function( startTime, lambda, alpha, sigma, rho, multip )
+var clads0multipGoesUndetected = function( startTime, lambda0, lambda, alpha, sigma, rho, multip )
 {
     // extreme values patch 1/2
     if ( lambda  > phyjs.MAX_LAMBDA )
@@ -66,9 +56,8 @@ var clads0multipGoesUndetected = function( startTime, lambda, alpha, sigma, rho,
     // Speciation; first draw values for daughter lineages and then recurse
         var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
         var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
-        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
-        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
-         //       display([lambda1, lambda2, multip1, multip2])
+        var lambda1 = lambda0 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = lambda0 * multip2                                // Calculate new lambda for daughter2
 	return ( clads0multipGoesUndetected( currentTime, lambda1, alpha, sigma, rho, multip1 )
           && clads0multipGoesUndetected( currentTime, lambda2, alpha, sigma, rho, multip2 ) )
 }
@@ -98,7 +87,7 @@ var clads0multipGoesUndetected = function( startTime, lambda, alpha, sigma, rho,
 var simClaDS0multip = function( tree, lambda_0, alpha, sigma, rho, multip )
 {
     // Simulate process along a branch
-    var simBranch = function( startTime, stopTime, lambda, alpha, sigma, rho, multip )
+    var simBranch = function( startTime, stopTime, lambda0, lambda, alpha, sigma, rho, multip )
     {
 
 	var t1 = startTime - stopTime
@@ -129,8 +118,8 @@ var simClaDS0multip = function( tree, lambda_0, alpha, sigma, rho, multip )
 	// that is sampled, and that lambda2 applies to the undetected side lineage.
         var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
         var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
-        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
-        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+        var lambda1 = lambda0 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = lambda0 * multip2                                // Calculate new lambda for daughter2
             //    display([lambda1, lambda2, multip1, multip2])
 	var sideUndetected = clads0multipGoesUndetected( currentTime, lambda2, alpha, sigma, rho, multip2 )
 	if ( sideUndetected == false )
@@ -150,8 +139,8 @@ var simClaDS0multip = function( tree, lambda_0, alpha, sigma, rho, multip )
 	{
         var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
         var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
-        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
-        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+        var lambda1 = lambda0 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = lambda0 * multip2                                // Calculate new lambda for daughter2
              //   display("null")
              //   display([lambda1, lambda2, multip1, multip2])
 	    
@@ -185,8 +174,8 @@ var simClaDS0multip = function( tree, lambda_0, alpha, sigma, rho, multip )
             // Get daughter rates and then recurse
         var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
         var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
-        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
-        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+        var lambda1 = lambda0 * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = lambda0 * multip2                                // Calculate new lambda for daughter2
               //  display([lambda1, lambda2, multip1, multip2])
             var subtree1 = simTree( tree.left,  tree, lambda1, alpha, sigma, rho, multip1 )
             var subtree2 = simTree( tree.right,  tree, lambda2, alpha, sigma, rho, multip2 )
