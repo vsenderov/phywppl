@@ -80,8 +80,8 @@ var clads0TreeSimulate= function( startTime, lambda, alpha, sigma, rho, multip  
     // Speciation; first draw values for daughter lineages and then recurse
         var multip1 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
         var multip2 = multip * Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
-        var lambda1 = 0.2 * multip1                                // Calculate new lambda for daughter1
-        var lambda2 = 0.2 * multip2                                // Calculate new lambda for daughter2
+        var lambda1 = lambda * multip1                                // Calculate new lambda for daughter1
+        var lambda2 = lambda * multip2                                // Calculate new lambda for daughter2
         
         var leftTree  = clads0TreeSim( currentTime, lambda1, alpha, sigma, rho, multip1 );       // Get back two Newick strings, partial trees
         var rightTree = clads0TreeSim( currentTime, lambda2, alpha, sigma, rho, multip2 );      // Get back two Newick strings, partial trees
