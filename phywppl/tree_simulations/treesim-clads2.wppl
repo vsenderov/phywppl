@@ -35,11 +35,12 @@ var clads2TreeSimulate= function( startTime, lambda0, alpha, sigma, epsilon, rho
     if (Tree == false) {
         return("No survivors")
     }
-    var infiniteTree = Tree.includes("Infinity:")
+    var Tree1 = Tree.join(" ") ;
+    var infiniteTree = Tree1.includes("Infinity:")
     if (infiniteTree == true) {
         return("Error: Tree has infinite parts - the maximum guard was activated")
     }
-    var zeroTree = Tree.includes("Zero:")
+    var zeroTree = Tree1.includes("Zero:")
     if (zeroTree == true) {
         return("Error: Tree has parts where the minimum guard on lambda was activated")
     }
@@ -75,7 +76,7 @@ var clads2TreeSimulate= function( startTime, lambda0, alpha, sigma, epsilon, rho
 
     var t = exponential( {a: lambda + mu } )
     var currentTime = startTime - t
-    var internalBranch = startTime - currentTime;    // Calculate length of internal branch leading up to event
+    var internalBranch = t;    // Calculate length of internal branch leading up to event
     if ( currentTime < 0 )     // If we have reached the present...
     {
         if ( flip( rho ) ){
