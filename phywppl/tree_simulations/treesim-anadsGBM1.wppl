@@ -51,7 +51,6 @@ var anads1TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, mu
  
  var anads1TreeSim = function( startTime, lambda, stepsize, alpha, sigma, mu, rho )
 {
-    display(lambda) //debugging
     // extreme values patch
     if ( lambda  > MAX_LAMBDA ) {
         var Label = 'Infinity:';            //Indicate infinite tree on this branch
