@@ -14,11 +14,11 @@
 
 // Setting parameters/priors
 var filename = argv["_"][1]
-var startTime = argv["_"][2]
-var lambda0 = gamma( {shape: 3, scale: 0.1} )
-var mu = 0.1
-var stepsize = 0.1
-var sigma = Math.sqrt( 1 / gamma( { shape: 1, scale: 1/0.2 } ) )
+var startTime = argv["_"][2] // Tree age
+var lambda0 = 0.2 //gamma( {shape: 1, scale: 1} )
+var mu0 = 0.1 //gamma( {shape: 1, scale: 0.5} )
+var stepsize = 0.2
+var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
 var alpha = Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
 var rho = 1
 // GUARDS
@@ -26,9 +26,9 @@ var MAX_LAMBDA = 20
 var MAX_DIV = 20
 
 
-var anads1TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, mu, rho  )
+var anads1TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, mu0, rho  )
 {
-    var Tree = anads1TreeSim( startTime, lambda0, stepsize, alpha, sigma, mu, rho );
+    var Tree = anads1TreeSim( startTime, lambda0, stepsize, alpha, sigma, mu0, rho );
     if (Tree == false) {
         return("No survivors")
     }
@@ -51,6 +51,7 @@ var anads1TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, mu
  
  var anads1TreeSim = function( startTime, lambda, stepsize, alpha, sigma, mu, rho )
 {
+    display(lambda) //Debugging
     // extreme values patch
     if ( lambda  > MAX_LAMBDA ) {
         var Label = 'Infinity:';            //Indicate infinite tree on this branch
@@ -143,4 +144,4 @@ var anads1TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, mu
 }
 
 
-anads1TreeSimulate( startTime, lambda0, stepsize, alpha, sigma, mu, rho )
+anads1TreeSimulate( startTime, lambda0, stepsize, alpha, sigma, mu0, rho )

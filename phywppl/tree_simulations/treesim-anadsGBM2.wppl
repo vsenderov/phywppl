@@ -14,22 +14,23 @@
 
 // Setting parameters/priors
 var filename = argv["_"][1]
-var startTime = argv["_"][2]
-var lambda0 = gamma( {shape: 3, scale: 0.1} )
-var mu0 = 0.1
+var startTime = argv["_"][2] // Tree age
+var lambda0 = 0.2// gamma( {shape: 1, scale: 1} )
+var mu0 = 0.1// gamma( {shape: 1, scale: 0.5} )
 var epsilon = mu0 / lambda0
-var stepsize = 0.1
-var sigma = Math.sqrt( 1 / gamma( { shape: 1, scale: 1/0.2 } ) )
-var alpha = Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+var stepsize = 0.2
+var sigma = 0.00001 //Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
+var alpha = 1 //Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
 var rho = 1
 // GUARDS
 var MAX_LAMBDA = 20
 var MAX_DIV = 20
+var max_R = 1000 //50*startTime // A guard against very deep recursions
 
 
-var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, epsilon, rho  )
+var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, epsilon, rho, max_R  )
 {
-    var Tree = anads2TreeSim( startTime, lambda0, stepsize, alpha, sigma, epsilon, rho );
+    var Tree = anads2TreeSim( startTime, lambda0, stepsize, alpha, sigma, epsilon, rho, max_R );
     if (Tree == false) {
         return("No survivors")
     }
@@ -42,6 +43,10 @@ var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, ep
     if (zeroTree == true) {
         return("Error: Tree has parts where the minimum guard on lambda was activated")
     }
+    var zeroTree = Tree1.includes("NaN:")
+    if (zeroTree == true) {
+        return("Error: Guard on max number of recursions was activated")
+    }
     else {
         var Tree = Tree.join('') + ';' ;
         fs.write(filename, Tree);
@@ -50,11 +55,18 @@ var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, ep
 }
 
  
- var anads2TreeSim = function( startTime, lambda, stepsize, alpha, sigma, epsilon, rho )
+ var anads2TreeSim = function( startTime, lambda, stepsize, alpha, sigma, epsilon, rho, max_R )
 {
+    display(lambda) //Debugging
     var mu = epsilon * lambda
-    
+    display(mu) //Debugging
     // extreme values patch
+    if  ( max_R == 0 ) {
+        display("NaN");
+        var Label = 'NaN:';            //Indicate infinite tree on this branch
+        var NewickTree = [Label , startTime] ;     // Make start on tree
+        return NewickTree;
+        }
     if ( lambda  > MAX_LAMBDA ) {
         var Label = 'Infinity:';            //Indicate infinite tree on this branch
         var NewickTree = [Label , startTime] ;     // Make start on tree
@@ -82,7 +94,7 @@ var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, ep
         var internalBranch = timeToAnagenesis;
         var multip = Math.exp(gaussian( {mu: alpha*stepsize, sigma: sigma*stepsize}))           // Draw and calc new multiplier
         var lambdaNew = lambda * multip ;
-        var Tree = anads2TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, epsilon, rho );         // Continue along branch
+        var Tree = anads2TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, epsilon, rho, max_R-1 );         // Continue along branch
         if (Tree == false ) {             // Extinct/not sampled
                 return false;
         }
@@ -120,8 +132,8 @@ var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, ep
         var multip = Math.exp(gaussian( {mu: alpha*delta, sigma: sigma*delta}))         // Draw and calc new multiplier
         var lambdaNew = lambda * multip ;                                                                // Calculate new lambda
         //Speciation/cladogenetic event
-        var leftTree  = anads2TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, epsilon, rho );       // Get back two Newick strings, partial trees
-        var rightTree = anads2TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, epsilon, rho );      // Get back two Newick strings, partial trees
+        var leftTree  = anads2TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, epsilon, rho, max_R-1 );       // Get back two Newick strings, partial trees
+        var rightTree = anads2TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, epsilon, rho, max_R-1 );      // Get back two Newick strings, partial trees
         
         if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
                 return false;
@@ -145,4 +157,4 @@ var anads2TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, ep
 }
 
 
-anads2TreeSimulate( startTime, lambda0, stepsize, alpha, sigma, epsilon, rho )
+anads2TreeSimulate( startTime, lambda0, stepsize, alpha, sigma, epsilon, rho, max_R )

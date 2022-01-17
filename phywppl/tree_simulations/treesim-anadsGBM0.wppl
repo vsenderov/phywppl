@@ -15,14 +15,14 @@
 
 // Setting parameters/priors
 var filename = argv["_"][1]
-var startTime = argv["_"][2]
-var lambda0 =  gamma( {shape: 3, scale: 0.1} )
-var stepsize = 0.1
-var sigma = Math.sqrt( 1 / gamma( { shape: 1, scale: 1/0.2 } ) )
+var startTime = argv["_"][2] // Tree age
+var lambda0 = 0.2 // gamma( {shape: 1, scale: 1} )
+var stepsize = 0.2
+var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
 var alpha = Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
 var rho = 1
 // GUARD
-var MAX_LAMBDA = 10;
+var MAX_LAMBDA = 20;
 
 
 var anads0TreeSimulate= function( startTime, lambda, stepsize, alpha, sigma, rho )
@@ -50,6 +50,7 @@ var anads0TreeSimulate= function( startTime, lambda, stepsize, alpha, sigma, rho
  
  var anads0TreeSim = function( startTime, lambda, stepsize, alpha, sigma, rho )
 {
+    display(lambda) //Debugging
     // extreme values patch
     if ( lambda  > MAX_LAMBDA ) {
         var Label = 'Infinity:';                    //Indicate infinite tree on this branch
