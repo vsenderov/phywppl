@@ -1,0 +1,31 @@
+{
+    "label": "AnaDS2-fixed",
+    "description": "AnaDS2 prior predictive simulation.",
+
+    "hyper_parameters": {   		
+        "filename": "'tree.nwk'",
+        "MAX_LAMBDA": 1e12,
+        "MAX_DIV": 1e12,
+	    "MAX_NODES": 100000
+    },
+    
+    "parameters": {
+        "startTime": [1.0, 10.0],
+    	"sigma": [0.00001, 0.5],
+    	"logAlpha": [-0.05, 0.0, 0.05],
+    	"max_R": 100000,
+	"stepsize": [0.1, 1.0],
+        "lambda0": 0.2,
+       	"rho": 1.0,
+        "mu0": 0.1,
+	"epsilon": "mu0/lambda0",
+	"alpha": "Math.exp(logAlpha)"
+       },
+    
+    "model": " globalStore.n = 0\n anads2TreeSimulate( startTime, lambda0, stepsize, logAlpha, sigma, epsilon, rho, max_R )\n",
+    
+    "inference": {
+        "method": false,
+        "likelihood": false
+    }
+}

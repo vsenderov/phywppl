@@ -262,7 +262,11 @@ var i = 0
 while (i < sim.length) {
     log("Running simulation ", sim[i].command)
 
-    sim[i].output = shell.exec(sim[i].command).stdout
+    //sim[i].output = shell.exec(sim[i].command).stdout
+    var execution_result = shell.exec(sim[i].command)
+    sim[i].output = execution_result.stdout
+    sim[i].code = execution_result.code
+    sim[i].error = execution_result.stderr
     
     i++
 }
