@@ -1,0 +1,147 @@
+/**
+ * Simulation from startTime to the present under AnaDSGBM1, returns observed Tree (without extinctions)
+ *
+ *
+ *
+ * To run the simulation use:
+ * npm run wppl tree_simulations/treesim-anadsGBM1.wppl [N] [OUTPUT_FILENAME] [TREEAGE]
+ *
+ * where [N] is the number of iterations, for example 3
+ *       [OUTPUT_FILENAME] path to output file
+ *       [startTime] Tree age
+ *
+ */
+
+// Setting parameters/priors
+var filename = argv["_"][1]
+var startTime = argv["_"][2] // Tree age
+var lambda0 = 0.2 //gamma( {shape: 1, scale: 1} )
+var mu0 = 0.1 //gamma( {shape: 1, scale: 0.5} )
+var stepsize = 0.2
+var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
+var alpha = Math.exp( gaussian( {mu: 0, sigma: sigma} ) )
+var rho = 1
+// GUARDS
+var MAX_LAMBDA = 20
+var MAX_DIV = 20
+
+
+var anads1TreeSimulate= function( startTime, lambda0, stepsize, alpha, sigma, mu0, rho  )
+{
+    var Tree = anads1TreeSim( startTime, lambda0, stepsize, alpha, sigma, mu0, rho );
+    if (Tree == false) {
+        return("No survivors")
+    }
+    var Tree1 = Tree.join(" ") ;
+    var infiniteTree = Tree1.includes("Infinity:")
+    if (infiniteTree == true) {
+        return("Error: Tree has infinite parts - the maximum guard was activated")
+    }
+    var zeroTree = Tree1.includes("Zero:")
+    if (zeroTree == true) {
+        return("Error: Tree has parts where the minimum guard on lambda was activated")
+    }
+    else {
+        var Tree = Tree.join('') + ';' ;
+        fs.write(filename, Tree);
+        return Tree
+    }
+}
+
+ 
+ var anads1TreeSim = function( startTime, lambda, stepsize, alpha, sigma, mu, rho )
+{
+    display(lambda) //Debugging
+    // extreme values patch
+    if ( lambda  > MAX_LAMBDA ) {
+        var Label = 'Infinity:';            //Indicate infinite tree on this branch
+        var NewickTree = [Label , startTime] ;     // Make start on tree
+        return NewickTree;
+        }
+    if ( lambda - mu  > MAX_DIV ) {
+        var Label = 'Infinity:';            //Indicate infinite tree on this branch
+        var NewickTree = [Label , startTime] ;     // Make start on tree
+        return NewickTree;
+        }
+    if ( lambda == 0.0 ) {
+        var Label = 'Zero:';            //Indicate lambda=0 on this branch
+        var NewickTree = [Label , startTime] ;     // Make start on tree
+        return NewickTree;
+    }
+    // end extreme values patch
+
+    var timeToSpeciation = exponential( {a: lambda } )
+    var timeToExtinction = exponential( {a: mu } )
+    var timeToAnagenesis = stepsize
+    
+    if (timeToAnagenesis < timeToSpeciation && timeToAnagenesis < timeToExtinction ){
+    //Anagenetic event
+        var currentTime = startTime - timeToAnagenesis;
+        var internalBranch = timeToAnagenesis;
+        var multip = Math.exp(gaussian( {mu: alpha*stepsize, sigma: sigma*stepsize}))           // Draw and calc new multiplier
+        var lambdaNew = lambda * multip ;                                                                // Calculate new lambda
+        var Tree = anads1TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, mu, rho );         // Continue along branch
+        if (Tree == false ) {             // Extinct/not sampled
+                return false;
+        }
+        else{
+        var newBranch = Tree[1] + internalBranch;           // Add the two "final" branches
+        var NewickTree = [Tree[0] , newBranch ] ;           // build correct final tree
+        return NewickTree;
+        }
+    }
+        
+    else {
+    //Speciation/cladogenetic event
+    var timeToEvent = Math.min(timeToSpeciation, timeToExtinction);
+    var currentTime = startTime - timeToEvent;
+    var internalBranch = timeToEvent;    // Calculate length of internal branch leading up to event
+    if ( currentTime < 0 )
+    // We have reached the present
+    {
+        if ( flip( rho ) ){
+            var Label = uniform(0,1) + ':';            //Survived to present, sampled. Start tree: Set random label to leaf node
+            var NewickTree = [Label , startTime] ;     // Make start on tree
+            return NewickTree;
+        }
+        else {
+            return false;    //Survived to present, but not sampled. Remove branch.
+        }
+    }
+    if ( timeToExtinction == timeToEvent ) {
+        return false;           //Extinct. Remove branch.
+    }
+    else {
+    // Speciation; first draw values for daughter lineages and then recurse
+        //Anagenetic "update" event at branching point
+        var delta = timeToSpeciation;
+        var multip = Math.exp(gaussian( {mu: alpha*delta, sigma: sigma*delta}))         // Draw and calc new multiplier
+        var lambdaNew = lambda * multip ;                                                                // Calculate new lambda
+        //Speciation/cladogenetic event
+        var leftTree  = anads1TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, mu, rho );       // Get back two Newick strings, partial trees
+        var rightTree = anads1TreeSim( currentTime, lambdaNew, stepsize, alpha, sigma, mu, rho );      // Get back two Newick strings, partial trees
+        
+        if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
+                return false;
+            }
+        if (rightTree == false) {
+                var newBranch = leftTree[1] + internalBranch;       // Add the two branches
+                var NewickTree = [leftTree[0] , newBranch ] ;       // build correct tree without the extinct side
+                return NewickTree ;
+            }
+        if (leftTree  == false ) {
+                var newBranch = rightTree[1] + internalBranch;      // Add the two branches
+                var NewickTree = [rightTree[0] , newBranch ] ;      // build correct tree without the extinct side
+                return NewickTree ;
+            }
+        else {
+                var NewickTree = ['(' + leftTree.join('') +',' + rightTree.join('') + ')' + ':' , internalBranch] ;          // Merge trees
+                return NewickTree ;
+            }
+        }
+    }
+    
+}
+
+
+anads1TreeSimulate( startTime, lambda0, stepsize, alpha, sigma, mu0, rho )
