@@ -25,9 +25,9 @@
  */
 
 // constants
-const MAX_ITERATIONS = 64
+const MAX_ITERATIONS = 1e6
 const DEFAULT_ITERATIONS = 1
-const DEFAULT_TREE = "src/bisse_32.phyjson"
+const DEFAULT_TREE = ""
 const DEFAULT_RHO = 1.0
 const DEFAULT_NPART = 5000
 require('events').EventEmitter.defaultMaxListeners = MAX_ITERATIONS;
@@ -96,7 +96,7 @@ if (process.argv.length < 4) {
 } else if (process.argv.length == 5) {
     webppl = process.argv[3]
     iterations = process.argv[4]
-    output_error(4, 1)
+    //output_error(4, 1)
     treefile = DEFAULT_TREE
     rho = DEFAULT_RHO
     particles = DEFAULT_NPART
@@ -154,16 +154,54 @@ shell.config.silent = true;
 shell.rm(js + "/" + executable)
 shell.config.silent = false;
 shell.exec(compile_command)
-
+//console.log(compile_command)
 
 
 //Execution
- exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=4096 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
-// console.log(exec_command)
+exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=128 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
 
- for (i = 0; i < iterations; i++) {
-     shell.exec(exec_command, {async:true} )
- }
+//console.log(exec_command)
 
+function sleep(milliseconds) {
+  const date = Date.now();
+  let currentDate = null;
+  do {
+    currentDate = Date.now();
+  } while (currentDate - date < milliseconds);
+}
+//for (i = 0; i < iterations; i++) {
+i = 0
+var BATCH_SIZE = 64
+while (i < iterations) {
+	// TODO
+    // Execute the iterations asynchronously in batches
+    // idea: 1. run 16 (BATCHSIZE) iterations together
+    // 2. wait until all promises have been resolved
+    // 3. run another batch
+	// Can probably be done by checking if the promise is pending
+    //     https://ourcodeworld.com/articles/read/317/how-to-check-if-a-javascript-promise-has-been-fulfilled-rejected-or-resolved
+	// and then sleeping a bit until it is resolved
+    // function exec(command) {
+    // 	return new Promise((resolve, reject) => shell.exec(command, {async:true}, (code, value, error) => {
+    //         if (error) {
+	// 		return reject(error)
+    //         }
+    //         resolve(value)
+    // 	}))
+	// }
+    // (async () => {
+    //let res = await exec(exec_command)
+    // })()
+    for (var j = 0; j < BATCH_SIZE && i < iterations; j++) {
+	shell.exec(exec_command, {async:true} )
+	i++
+    }
+    // Poor man's asynch
+    if (iterations > BATCH_SIZE && i < iterations) {
+	//waiting 10 sec before next batch
+	sleep(2000)
+    }
+
+}
 
 
