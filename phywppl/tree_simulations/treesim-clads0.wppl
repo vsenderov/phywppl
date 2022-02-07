@@ -4,71 +4,98 @@
  *
  *
  * To run the simulation use:
- * npm run wppl tree_simulations/treesim-clads0.wppl [N] [OUTPUT_FILENAME] [TREEAGE] [LAMBDA0]
+ * npm run wppl tree_simulations/treesim-clads0.wppl  1 [OUTPUT_TREE] [RHO] [TREE_AGE]
  *
- * where [N] is the number of iterations, for example 3
+ * where 1 is the number of iterations (use external loop if needed)
  *       [OUTPUT_FILENAME] path to output file
- *       [startTime] Tree age
- *       [LAMBDA0] value of lambda at the start of the simulation
+ *       [RHO] sampling fraction
+ *       [TREEAGE] Tree age (we've hijacked the unneeded number of particles)
  *
  */
 
+// Setting parameters/priors
 var filename = argv["_"][1]
-var startTime = argv["_"][2]
-var lambda0 = argv["_"][3]
-var alpha = Math.log(0.95)
-var sigma = 0.1
-var multip = 1
-var rho = 1
+var rho = argv["_"][2]       // "sampling rate" read as a second argument
+                             // because this is the default semantics of npm run wppl
+var startTime = argv["_"][3] // tree age !!! Hijacked number of particles !!! TODO fix this
+
+var lambda0 = 0.2
+//var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
+var sigma = 0.5
+//var logAlpha = gaussian( {mu: 0, sigma: sigma} )
+//var alpha = Math.exp(logAlpha)
+var alpha = 0.95
+var logAlpha = Math.log(alpha)
+
+console.log("age = ", startTime)
+console.log("lambda0 = ", lambda0)
+console.log("sigma = ", sigma)
+console.log("alpha = ", alpha)
+console.log("rho = ", rho)
+console.log("\n")
+
 // GUARD
-var MAX_LAMBDA = 20
+var max_R = 100000 // 500*startTime  A guard against very deep recursions
+var MAX_LAMBDA = 1e12
+var MAX_NODES = 100000
 
+globalStore.n = 0; // number of nodes
 
-var clads0TreeSimulate= function( startTime, lambda, alpha, sigma, rho, multip  )
+///////////////////////////////library code//////////////////////////////////////////////////////////////
+// element is a string
+var checkError = function(treeElement) {
+    if (treeElement.includes("ERROR")) {
+    return true
+    } else return false
+}
+
+var clads0TreeSimulate= function( startTime, lambda0, logAlpha, sigma, rho, max_R  )
 {
-    var Tree = clads0TreeSim( startTime, lambda, alpha, sigma, rho, multip );
+    var Tree = clads0TreeSim( startTime, lambda0, logAlpha, sigma, rho, max_R  );
     if (Tree == false) {
-        return("No survivors")
+    var message = "No survivors."
+    fs.write(filename, message)
+        return(message)
     }
-    var Tree1 = Tree.join(" ") ;
-    var infiniteTree = Tree1.includes("Infinity:")
-    if (infiniteTree == true) {
-        return("Error: Tree has infinite parts - the maximum guard on lambda was activated")
-    }
-    var zeroTree = Tree1.includes("Zero:")
-    if (zeroTree == true) {
-        return("Error: Tree has parts where the minimum guard on lambda was activated")
+    var stringTree = Tree.join("")
+    if (stringTree.includes("ERROR")) {
+    var message = "Guards hit. " + stringTree
+    fs.write(filename, message)
+    return(message)
     }
     else {
-        var Tree = Tree.join('') + ';' ;
+        var Tree = "(" + stringTree + ")" + ';' ;
         fs.write(filename, Tree);
         return Tree
     }
 }
 
  
- var clads0TreeSim = function( startTime, lambda, alpha, sigma, rho, multip )
+ var clads0TreeSim = function( startTime, lambda, logAlpha, sigma, rho, max_R  )
 {
     // extreme values patch
-    if ( lambda  > phyjs.MAX_LAMBDA ) {
-        var Label = 'Infinity:';            //Indicate infinite tree on this branch
-        var NewickTree = [Label , startTime] ;     // Make start on tree
-        return NewickTree;
-        }
-    if ( lambda == 0.0 ) {
-        var Label = 'Zero:';            //Indicate lambda=0 on this branch
-        var NewickTree = [Label , startTime] ;     // Make start on tree
-        return NewickTree;
+    if  ( max_R == 0 ) {
+    return ["ERROR_MAX_RECURSION:", startTime]
     }
-    // end extreme values patch
+    if ( lambda  > MAX_LAMBDA ) {
+    return ["ERROR_MAX_LAMBDA:", startTime]
+    }
+    if ( lambda == 0.0 ) {
+    return ["ERROR_ZERO:", startTime]
+    }
+    if ( globalStore.n > MAX_NODES ) {
+    return ["ERROR_MAX_TAXA:", startTime]
+    }
+    //end extreme values patch
 
     var t = exponential( {a: lambda } )
     var currentTime = startTime - t
     var internalBranch = t;    // Calculate length of internal branch leading up to event
-    if ( currentTime < 0 )     // If we have reached the present...
-    {
+    if ( currentTime < 0 )   { // If we have reached the present
+        globalStore.n = globalStore.n + 1;
+        
         if ( flip( rho ) ){
-            var Label = uniform(0,1) + ':';            //Survived to present, sampled. Start tree: Set random label to leaf node
+            var Label = "Taxon_" + globalStore.n + ':';           //Survived to present, sampled. Start tree: Set random label to leaf node
             var NewickTree = [Label , startTime] ;     // Make start on tree
             return NewickTree;
         }
@@ -79,13 +106,18 @@ var clads0TreeSimulate= function( startTime, lambda, alpha, sigma, rho, multip  
     else {
 
     // Speciation; first draw values for daughter lineages and then recurse
-        var multip1 = Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
-        var multip2 = Math.exp(gaussian( {mu: alpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
+        var multip1 = Math.exp(gaussian( {mu: logAlpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter1
+        var multip2 = Math.exp(gaussian( {mu: logAlpha, sigma: sigma}))  // Draw and calc new multiplier set for daughter2
         var lambda1 = lambda * multip1                                // Calculate new lambda for daughter1
         var lambda2 = lambda * multip2                                // Calculate new lambda for daughter2
         
-        var leftTree  = clads0TreeSim( currentTime, lambda1, alpha, sigma, rho, multip1 );       // Get back two Newick strings, partial trees
-        var rightTree = clads0TreeSim( currentTime, lambda2, alpha, sigma, rho, multip2 );      // Get back two Newick strings, partial trees
+        var leftTree  = clads0TreeSim( currentTime, lambda1, logAlpha, sigma, rho, max_R-1  );       // Get back two Newick strings, partial trees
+        // Check if the left Tree contains an error condition
+        if (leftTree == true && leftTree.some(checkError)) {
+            return leftTree; // return only left tree immediately
+        }
+        
+        var rightTree = clads0TreeSim( currentTime, lambda2, logAlpha, sigma, rho, max_R-1 );      // Get back two Newick strings, partial trees
         
         if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
                 return false;
@@ -108,5 +140,8 @@ var clads0TreeSimulate= function( startTime, lambda, alpha, sigma, rho, multip  
     
 }
 
+////////////////////////////////end library code////////////////////////////////////////////////////////////////////
 
-clads0TreeSimulate( startTime, lambda0, alpha, sigma, rho, multip )
+var message = "Error: MEMORY"
+fs.write(filename, message)
+clads0TreeSimulate( startTime, lambda0, logAlpha, sigma, rho, max_R )

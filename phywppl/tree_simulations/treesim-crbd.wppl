@@ -4,48 +4,71 @@
  *
  *
  * To run the simulation use:
- * npm run wppl tree_simulations/treesim-crb.wppl [N] [OUTPUT_FILENAME] [TREEAGE] [LAMBDA]
+ * npm run wppl tree_simulations/treesim-crb.wppl 1 [OUTPUT_TREE] [RHO] [TREE_AGE]
  *
- * where [N] is the number of iterations, for example 3
+ * where 1 is the number of iterations (use external loop if needed)
  *       [OUTPUT_FILENAME] path to output file
- *       [TreeAge] Tree age
- *       [LAMBDA] value of lambda in simulation
+ *       [RHO] sampling fraction
+ *       [TREEAGE] Tree age (we've hijacked the unneeded number of particles)
  *
  */
 
 var filename = argv["_"][1]
-var treeage = argv["_"][2]
-var lambda = argv["_"][3]
+var rho = argv["_"][2]       // "sampling rate" read as a second argument
+                             // because this is the default semantics of npm run wppl
+var startTime = argv["_"][3] // tree age !!! Hijacked number of particles !!! TODO fix this
+//var lambda =  gamma( {shape: 1, scale: 1} )
+var lambda = 0.2
 var mu = 0.05
 
-var crbdTreeSimulate= function( startTime, lambda, mu, filename )
+console.log("age = ", startTime)
+console.log("lambda = ", lambda)
+console.log("mu = ", mu)
+console.log("rho = ", rho)
+console.log("\n")
+
+globalStore.n = 0; // number of nodes
+
+///////////////////////////////library code//////////////////////////////////////////////////////////////
+
+var crbdTreeSimulate= function( startTime, lambda, mu, rho, filename )
 {
-    var Tree = crbdTreeSim( startTime, lambda, mu );
+    var Tree = crbdTreeSim( startTime, lambda, mu, rho );
     if (Tree == false) {
-        return("No survivors")
+        var message = "No survivors."
+        fs.write(filename, message)
+        return(message)
     }
     else {
-        var Tree = Tree.join('') + ';' ;
+        var stringTree = Tree.join("")
+        var Tree = "(" + stringTree + ")" + ';' ;
         fs.write(filename, Tree);
         return Tree
     }
 }
 
-var crbdTreeSim= function( startTime, lambda, mu )
+var crbdTreeSim= function( startTime, lambda, mu, rho )
 {
     var t = exponential( {a: lambda + mu} ); //Draw a waiting time
     var currentTime = startTime - t;     //Calculate time of event
     if ( currentTime < 0 ) {                 // If we have reached the present
-        var Label = uniform(0,1) + ':';            // Set random label to leaf node
-        var NewickTree = [Label , startTime] ;      // Make start on tree
-        return NewickTree;
+        globalStore.n = globalStore.n + 1; // Needed for the node
+        if ( flip( rho ) ) {
+            var Label = "Taxon_" + globalStore.n + ':';
+            var NewickTree = [Label, startTime] ;     // Make start on tree
+            return NewickTree;
+            }
+        else {
+            return false;    //Survived to present, but not sampled. Remove branch.
+            }
     }
+    
     else {                                          // Otherwise we have an event
         var internalBranch = startTime - currentTime;    // Calculate length of internal branch leading up to event
         var speciation = flip( lambda/(lambda+mu) ) ;      // Speciation or extinction?
         if ( speciation == true ) {                            //Speciation event
-            var leftTree  = crbdTreeSim( currentTime, lambda, mu );       // Get back two Newick strings, partial trees
-            var rightTree = crbdTreeSim( currentTime, lambda, mu );      // Get back two Newick strings, partial trees
+            var leftTree  = crbdTreeSim( currentTime, lambda, mu, rho );       // Get back two Newick strings, partial trees
+            var rightTree = crbdTreeSim( currentTime, lambda, mu, rho );      // Get back two Newick strings, partial trees
             if (leftTree == false && rightTree == false ) {         // Both sides are extinct
                 return false;
             }
@@ -70,4 +93,8 @@ var crbdTreeSim= function( startTime, lambda, mu )
     }
 }
 
-crbdTreeSimulate(treeage, lambda, mu, filename)
+////////////////////////////////end library code////////////////////////////////////////////////////////////////////
+
+var message = "Error: MEMORY"
+fs.write(filename, message)
+crbdTreeSimulate(startTime, lambda, mu, rho, filename)
