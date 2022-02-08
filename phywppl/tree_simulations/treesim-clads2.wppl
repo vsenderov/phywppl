@@ -143,7 +143,6 @@ var clads2TreeSim = function( startTime, lambda, logAlpha, sigma, epsilon, rho, 
         return NewickTree ;
      }
 }
-
 ////////////////////////////////end library code////////////////////////////////////////////////////////////////////
 
 var message = "Error: MEMORY"
