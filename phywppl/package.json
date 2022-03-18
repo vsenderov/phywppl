@@ -8,21 +8,21 @@
    },
    "webppl": {
       "wppl": [
-          "models/crbd.wppl",
-          "models/crbd-analytical.wppl",
-          "models/clads0.wppl",
-          "models/clads0-multiplier.wppl",
-          "models/clads1.wppl",
-          "models/clads2.wppl",
-          "models/clads2plus.wppl",
-          "models/clads2plus-multiplier.wppl",
-          "models/clads2plus-multiplier-uncoupled.wppl",
-          "models/bamm.wppl",
-          "models/lsbds.wppl",
-          "models/tdbd-analytical.wppl",
-          "models/tdbd.wppl",
-          "models/anads2.wppl",
-	  "models/anads-simulators.wppl"
+         "models/crbd.wppl",
+         "models/crbd-analytical.wppl",
+         "models/clads0.wppl",
+         "models/clads0-multiplier.wppl",
+         "models/clads1.wppl",
+         "models/clads2.wppl",
+         "models/clads2plus.wppl",
+         "models/clads2plus-multiplier.wppl",
+         "models/clads2plus-multiplier-uncoupled.wppl",
+         "models/bamm.wppl",
+         "models/lsbds.wppl",
+         "models/tdbd-analytical.wppl",
+         "models/tdbd.wppl",
+         "models/anads2.wppl",
+         "models/simulators.wppl"
       ]
    },
    "scripts": {

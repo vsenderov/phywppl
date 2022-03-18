@@ -3,48 +3,81 @@
  * NO GUARDS
  *
  * To run the simulation use:
- * npm run wppl tree_simulations/treesim-crb.wppl [N] [OUTPUT_FILENAME] [TREEAGE] [LAMBDA]
+ * npm run wppl tree_simulations/treesim-crb.wppl 1 [OUTPUT_TREE] [RHO] [TREE_AGE]
  *
- * where [N] is the number of iterations, for example 3
+ * where 1 is the number of iterations (use external loop if needed)
  *       [OUTPUT_FILENAME] path to output file
- *       [TreeAge] Tree age
- *       [LAMBDA] value of lambda in simulation
+ *       [RHO] sampling fraction
+ *       [TREEAGE] Tree age (we've hijacked the unneeded number of particles)
  *
  */
 
 var filename = argv["_"][1]
-var treeage = argv["_"][2]
-var lambda = argv["_"][3]
+var rho = argv["_"][2]         // "sampling rate" read as a second argument // because this is the default semantics of npm run wppl                   
+var startTime = argv["_"][3]   // tree age !!! Hijacked number of particles !!! TODO fix this
 
+var lambda = 0.2    //var lambda =  gamma( {shape: 1, scale: 1} )
 
-var crbTreeSimulate= function( startTime, lambda, filename )
-{
-    var Tree = crbTreeSim( startTime, lambda );
-    var Tree = Tree + ';' ;
-    fs.write(filename, Tree);
-    return Tree
+console.log("age = ", startTime)
+console.log("lambda = ", lambda)
+console.log("rho = ", rho)
+console.log("\n")
+
+globalStore.n = 0; // number of nodes
+
+///////////////////////////////library code//////////////////////////////////////////////////////////////
+var crbTreeSimulate = function( startTime, lambda, rho, filename ) {
+    var Tree = crbTreeSim( startTime, lambda, rho );
+    if (Tree == false) {
+        var message = "No survivors."
+        fs.write(filename, message)
+        return(message)
+    } else {
+        var stringTree = Tree.join("")
+        var Tree = "(" + stringTree + ")" + ';' ;
+        fs.write(filename, Tree);
+        return Tree
+    }
 }
 
-
-var crbTreeSim= function( startTime, lambda )
-{
-    var t = exponential( {a: lambda } ); //Draw a waiting time
-    var currentTime = startTime - t;     //Calculate time of event
+var crbTreeSim = function( startTime, lambda, rho ) {
+    var t = exponential( {a: lambda } ); // Draw a waiting time
+    var currentTime = startTime - t;     // Calculate time of event
 
     if ( currentTime < 0 ) {                 // If we have reached the present
-    var Label = uniform(0,1) + ':';            // Set random label to leaf node
-    var NewickTree = Label + startTime ;      // Make start on tree
-    return NewickTree;
-    }
-    
-    else {                                               // Otherwise we have a speciation.
-    var internalBranch = startTime - currentTime;       // Calculate length of internal branch leading up to speciation event
-    var leftTree  = crbTreeSim( currentTime, lambda );       // Get back two Newick strings, partial trees
-    var rightTree = crbTreeSim( currentTime, lambda );      // Get back two Newick strings, partial trees
-    var NewickTree = '(' + leftTree +',' + rightTree + ')' + ':' + internalBranch ;          // Merge trees
-    return NewickTree ;                                
+        globalStore.n = globalStore.n + 1;   // Needed for the node
+        if ( flip( rho ) ) {
+            var Label = "Taxon_" + globalStore.n + ':';
+            var NewickTree = [Label, startTime] ;     // Make start on tree
+            return NewickTree;
+        }
+        else {
+            return false;    //Survived to present, but not sampled. Remove branch.
+        
+    } else {                                               // Otherwise we have a speciation.
+        var internalBranch = startTime - currentTime;       // Calculate length of internal branch leading up to speciation event
+        var leftTree  = crbTreeSim( currentTime, lambda, rho );       // Get back two Newick strings, partial trees
+        var rightTree = crbTreeSim( currentTime, lambda, rho );      // Get back two Newick strings, partial trees
+        if (leftTree == false && rightTree == false ) {             // Both sides are not sampled
+                return false;
+        }
+        if (rightTree == false) {
+                var newBranch = leftTree[1] + internalBranch;       // Add the two branches
+                var NewickTree = [leftTree[0] , newBranch ] ;       // build correct tree without the unsampled side
+                return NewickTree ;
+        }
+        if (leftTree  == false ) {
+                var newBranch = rightTree[1] + internalBranch;      // Add the two branches
+                var NewickTree = [rightTree[0] , newBranch ] ;      // build correct tree without the unsampled side
+                return NewickTree ;
+        } else {
+                var NewickTree = ['(' + leftTree.join('') +',' + rightTree.join('') + ')' + ':' , internalBranch] ;          // Merge trees
+                return NewickTree ;
+        }
     }
 }
+////////////////////////////////end library code////////////////////////////////////////////////////////////////////
 
-
-crbTreeSimulate(treeage, lambda, filename)
+var message = "Error: MEMORY"
+fs.write(filename, message)
+crbTreeSimulate(startTime, lambda, rho, filename)

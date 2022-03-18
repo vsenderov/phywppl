@@ -1,0 +1,31 @@
+{
+    "label": "anads-gbm2",
+    "description": "AnaDS-GBM2 simulation with bird priors",
+
+    "hyper_parameters": {
+        "filename": "'tree.nwk'",
+        "MAX_LAMBDA": 1e9,
+        "MAX_DIV": 1e9,
+        "MAX_NODES": 1e5
+    },
+    
+    "parameters": {
+	"startTime": 28.1,
+        "sigma": [0.00001, 0.3774917],
+        "logAlpha": [-0.24, 0.0],
+        "max_R": 1e6,
+        "stepsize": 0.1,
+        "lambda0": 0.2875,
+        "rho": 0.71,
+        "mu0": [0.0075, 0.14375],
+        "epsilon": "mu0/lambda0",
+        "alpha": "Math.exp(logAlpha)"
+    },
+    
+    "model": " globalStore.n = 0\n anads2TreeSimulate( startTime, lambda0, stepsize, logAlpha, sigma, epsilon, rho, max_R )\n",
+    
+    "inference": {
+        "method": false,
+        "likelihood": false
+    }
+}
