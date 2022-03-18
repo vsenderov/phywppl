@@ -158,7 +158,7 @@ shell.exec(compile_command)
 
 
 //Execution
-exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=128 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
+exec_command = "node " + " --stack-size=" +   stacksize + " " + " --max-old-space-size=512 " + js + "/" + executable + " " + treefile + " " + rho + " " + particles
 
 //console.log(exec_command)
 
