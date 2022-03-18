@@ -40,7 +40,6 @@ var MAX_NODES = 100000
 
 globalStore.n = 0; // Global number of Taxa
 
-///////////////////////////////library code//////////////////////////////////////////////////////////////
 /**
  * Helper function to check for errors in the tree string
  * @param treeElement is a string 
@@ -52,6 +51,7 @@ var checkError = function(treeElement) {
     } else return false
 }
 
+///////////////////////////////library code//////////////////////////////////////////////////////////////
 /**
  * Wrapper to the simulation function
  * Checks for errors and assembles the tree
@@ -64,10 +64,14 @@ var anads1TreeSimulate= function( startTime, lambda0, stepsize, logAlpha, sigma,
         return(message)
     }
     var stringTree = Tree.join("")
-    if (stringTree.includes("ERROR")) {
-        var message = "Guards hit. " + stringTree
+    if (stringTree.includes("ERROR_MAX")) {
+        var message = "Guards hit. Tree too big."
         fs.write(filename, message)
         return(message)
+    } else if (stringTree.includes("ERROR_ZERO")) {
+        var message = "Guards hit. Evolution stopped."
+        fs.write(filename, message)
+	    return(message)
     } else {
         var Tree = "(" + stringTree + ")" + ';' ;
         fs.write(filename, Tree);
@@ -157,10 +161,11 @@ var anads1TreeSim = function( startTime, lambda, stepsize, logAlpha, sigma, mu, 
             var leftTree  = anads1TreeSim( currentTime, lambdaNew, stepsize, logAlpha, sigma, mu, rho, max_R-1 );
         
             // Check if the left Tree contains an error condition
-            if (leftTree == true && leftTree.some(checkError)) {
+            if (leftTree && leftTree.some(checkError)) {
                 return leftTree; // return only left tree immediately
             }
             var rightTree = anads1TreeSim( currentTime, lambdaNew, stepsize, logAlpha, sigma, mu, rho, max_R-1 );
+	    if (rightTree && rightTree.some(checkError)) { return rightTree; } // also check right tree for error
             if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
                 return false;
             }

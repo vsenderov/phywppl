@@ -35,7 +35,6 @@ var MAX_NODES = 100000
 
 globalStore.n = 0; // Global number of Taxa
 
-///////////////////////////////library code//////////////////////////////////////////////////////////////
 /**
  * Helper function to check for errors in the tree string
  * @param treeElement is a string 
@@ -47,6 +46,7 @@ var checkError = function(treeElement) {
     } else return false
 }
 
+///////////////////////////////library code//////////////////////////////////////////////////////////////
 /**
  * Wrapper to the simulation function
  * Checks for errors and assembles the tree
@@ -59,10 +59,14 @@ var clads0TreeSimulate= function( startTime, lambda0, logAlpha, sigma, rho, max_
         return(message)
     }
     var stringTree = Tree.join("")
-    if (stringTree.includes("ERROR")) {
-        var message = "Guards hit. " + stringTree
+    if (stringTree.includes("ERROR_MAX")) {
+        var message = "Guards hit. Tree too big."
         fs.write(filename, message)
         return(message)
+    } else if (stringTree.includes("ERROR_ZERO")) d{
+        var message = "Guards hit. Evolution stopped."
+        fs.write(filename, message)
+	    return(message)
     } else {
         var Tree = "(" + stringTree + ")" + ';' ;
         fs.write(filename, Tree);
@@ -106,10 +110,11 @@ var clads0TreeSim = function( startTime, lambda, logAlpha, sigma, rho, max_R  ) 
         var lambda1 = lambda * multip1                                   // Calculate new lambda for daughter1
         var lambda2 = lambda * multip2                                   // Calculate new lambda for daughter2
         var leftTree  = clads0TreeSim( currentTime, lambda1, logAlpha, sigma, rho, max_R-1  );       // Get back two Newick strings, partial trees
-        if (leftTree == true && leftTree.some(checkError)) {                                         // Check if the left Tree contains an error condition
+        if (leftTree && leftTree.some(checkError)) {                                         // Check if the left Tree contains an error condition
             return leftTree; // return only left tree immediately
         }
         var rightTree = clads0TreeSim( currentTime, lambda2, logAlpha, sigma, rho, max_R-1 );      // Get back two Newick strings, partial trees
+	if (rightTree && rightTree.some(checkError)) { return rightTree; } // also check right tree for error
         if (leftTree == false && rightTree == false ) {                                            // Both sides are extinct/not sampled
             return false;
         }

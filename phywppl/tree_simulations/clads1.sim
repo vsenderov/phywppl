@@ -1,0 +1,30 @@
+{
+    "label": "clads1",
+    "description": "ClaDS1 simulation with bird priors",
+
+    "hyper_parameters": {
+        "filename": "'tree.nwk'",
+        "MAX_LAMBDA": 1e9,
+        "MAX_DIV": 1e9,
+        "MAX_NODES": 1e5
+    },
+    
+    "parameters": {
+	"startTime": 28.1,
+        "sigma": [0.00001, 0.3427827],
+        "logAlpha": [-0.28, 0.0],
+        "max_R": 1e6,
+        "stepsize": 0.1,
+        "lambda0": 0.245,
+        "rho": 0.71,
+        "mu": [0.005, 0.1225],
+        "alpha": "Math.exp(logAlpha)"
+    },
+    
+    "model": " globalStore.n = 0\n clads1TreeSimulate( startTime, lambda0, logAlpha, sigma, mu, rho, max_R )\n",
+    
+    "inference": {
+        "method": false,
+        "likelihood": false
+    }
+}

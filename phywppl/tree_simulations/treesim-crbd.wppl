@@ -28,23 +28,58 @@ console.log("\n")
 
 globalStore.n = 0; // number of nodes
 
+// GUARD
+var max_R = 100000 // 500*startTime  A guard against very deep recursions
+var MAX_LAMBDA = 1e12
+var MAX_NODES = 100000
+
+var checkError = function(treeElement) {
+    if (treeElement.includes("ERROR")) {
+    return true
+    } else return false
+}
+
 ///////////////////////////////library code//////////////////////////////////////////////////////////////
-var crbdTreeSimulate = function( startTime, lambda, mu, rho, filename ) {
-    var Tree = crbdTreeSim( startTime, lambda, mu, rho );
+var crbdTreeSimulate = function( startTime, lambda, mu, rho, filename, max_R ) {
+    var Tree = crbdTreeSim( startTime, lambda, mu, rho, max_R );
     if (Tree == false) {
         var message = "No survivors."
         fs.write(filename, message)
         return(message)
     }
-    else {
-        var stringTree = Tree.join("")
+    var stringTree = Tree.join("")
+    if (stringTree.includes("ERROR_MAX")) {
+        var message = "Guards hit. Tree too big."
+        fs.write(filename, message)
+        return(message)
+    } else if (stringTree.includes("ERROR_ZERO")) {
+        var message = "Guards hit. Evolution stopped."
+        fs.write(filename, message)
+	return(message)
+    } else {
         var Tree = "(" + stringTree + ")" + ';' ;
         fs.write(filename, Tree);
         return Tree
     }
 }
 
-var crbdTreeSim = function( startTime, lambda, mu, rho ) {
+var crbdTreeSim = function( startTime, lambda, mu, rho, max_R ) {
+    // extreme values patch
+    if  ( max_R == 0 ) {
+	return ["ERROR_MAX_RECURSION:", startTime]
+    }
+    if ( lambda  > MAX_LAMBDA ) {
+	return ["ERROR_MAX_LAMBDA:", startTime]
+    }
+    if ( lambda == 0.0 ) {
+	return ["ERROR_ZERO:", startTime]
+    }
+    if ( globalStore.n > MAX_NODES ) {
+	return ["ERROR_MAX_TAXA:", startTime]
+    }
+    //end extreme values patch
+
+    
     var t = exponential( {a: lambda + mu} ); //Draw a waiting time
     var currentTime = startTime - t;         //Calculate time of event
     if ( currentTime < 0 ) {                 // If we have reached the present
@@ -61,9 +96,13 @@ var crbdTreeSim = function( startTime, lambda, mu, rho ) {
         var internalBranch = startTime - currentTime;    // Calculate length of internal branch leading up to event
         var speciation = flip( lambda/(lambda+mu) ) ;    // Speciation or extinction?
         if ( speciation == true ) {                      // Speciation event
-            var leftTree  = crbdTreeSim( currentTime, lambda, mu, rho );       // Get back two Newick strings, partial trees
-            var rightTree = crbdTreeSim( currentTime, lambda, mu, rho );       // Get back two Newick strings, partial trees
-            if (leftTree == false && rightTree == false ) {                    // Both sides are extinct
+            var leftTree  = crbdTreeSim( currentTime, lambda, mu, rho, max_R - 1 );       // Get back two Newick strings, partial trees
+	    if (leftTree && leftTree.some(checkError)) {
+              return leftTree;  // return only left tree immediately
+            }
+            var rightTree = crbdTreeSim( currentTime, lambda, mu, rho, max_R - 1 );       // Get back two Newick strings, partial trees
+	    if (rightTree && rightTree.some(checkError)) { return rightTree; } // also check right tree for error
+	    if (leftTree == false && rightTree == false ) {                    // Both sides are extinct
                 return false;
             }
             if (rightTree == false) {
@@ -88,4 +127,4 @@ var crbdTreeSim = function( startTime, lambda, mu, rho ) {
 
 var message = "Error: MEMORY"
 fs.write(filename, message)
-crbdTreeSimulate(startTime, lambda, mu, rho, filename)
+crbdTreeSimulate(startTime, lambda, mu, rho, filename, max_R )
