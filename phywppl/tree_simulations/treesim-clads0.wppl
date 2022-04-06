@@ -63,7 +63,7 @@ var clads0TreeSimulate= function( startTime, lambda0, logAlpha, sigma, rho, max_
         var message = "Guards hit. Tree too big."
         fs.write(filename, message)
         return(message)
-    } else if (stringTree.includes("ERROR_ZERO")) d{
+    } else if (stringTree.includes("ERROR_ZERO")) {
         var message = "Guards hit. Evolution stopped."
         fs.write(filename, message)
 	    return(message)

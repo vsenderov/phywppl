@@ -53,6 +53,7 @@ var crbTreeSim = function( startTime, lambda, rho ) {
         }
         else {
             return false;    //Survived to present, but not sampled. Remove branch.
+        }
         
     } else {                                               // Otherwise we have a speciation.
         var internalBranch = startTime - currentTime;       // Calculate length of internal branch leading up to speciation event

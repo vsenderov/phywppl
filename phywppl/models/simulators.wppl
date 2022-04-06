@@ -85,7 +85,7 @@ var clads2TreeSim = function( startTime, lambda, logAlpha, sigma, epsilon, rho, 
     }
     var rightTree = clads2TreeSim( currentTime, lambda2, logAlpha, sigma, epsilon, rho, max_R-1 );      // Get back two Newick strings, partial trees
     if (rightTree && rightTree.some(checkError)) { return rightTree; } // also check right tree for error
-    }
+    
     if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
         return false;
     }

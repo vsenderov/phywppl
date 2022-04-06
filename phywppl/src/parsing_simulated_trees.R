@@ -1,4 +1,22 @@
+# Configuration -----------------------------------------------------------
+# comes from executing script
+# Example
+#directory = "C:/Users/vsend/GoogleDrive/Work/exp-anads/wip-4/AnaDS2-prior-predictive"
+#metadata_file = "AnaDS2-prior-predictive-results.JSON"
+#trees_dir = "AnaDS2-prior-predictive.js.trees"
+#tree_prefix = "tree_simulations_AnaDS2-prior-predictive_"
+#tree_postfix = ".js.trees"
+#filename = "outdata.Rdata"
+
+
+
+
 # Functions ---------------------------------------------------------------
+
+
+digs = function(x, k = 2) {
+  format(round(x, 2), nsmall = k)
+}
 
 #' Validate trees among possible cases
 #' 
@@ -37,14 +55,6 @@ zero_trees = function(trees, pattern = "^No") {
   }))
 }
 
-# Configuration -----------------------------------------------------------
-# comes from executing script
-# sample:
-#directory = "C:/Users/vsend/GoogleDrive/Work/exp-anads/wip-4/AnaDS2-prior-predictive"
-#metadata_file = "AnaDS2-prior-predictive-results.JSON"
-#trees_dir = "AnaDS2-prior-predictive.js.trees"
-#tree_prefix = "tree_simulations_AnaDS2-prior-predictive_"
-#tree_postfix = ".js.trees"
 
 setwd(directory)
 

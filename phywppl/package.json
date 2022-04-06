@@ -21,8 +21,8 @@
          "models/lsbds.wppl",
          "models/tdbd-analytical.wppl",
          "models/tdbd.wppl",
-         "models/anads2.wppl",
-         "models/simulators.wppl"
+          "models/anads2.wppl",
+	  "models/simulators.wppl"
       ]
    },
    "scripts": {
@@ -33,7 +33,8 @@
    },
    "dependencies": {
       "phyjs": "file:../phyjs",
-      "shelljs": "^0.8.4"
+      "shelljs": "^0.8.4",
+      "webppl-fs": "git+https://github.com/null-a/webppl-fs.git"
    },
    "devDependencies": {}
 }
