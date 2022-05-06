@@ -1,0 +1,30 @@
+{
+    "label": "anads-crbd",
+    "description": "CRBD simulation with median bird posteriors",
+
+    "hyper_parameters": {
+        "filename": "'tree.nwk'",
+        "MAX_LAMBDA": 1e9,
+        "MAX_DIV": 1e9,
+        "MAX_NODES": 1e5
+    },
+    
+    "parameters": {
+	"startTime": 28.1,
+        "sigma": [0.00001, 0.3807887],
+        "logAlpha": [-0.3, 0.0],
+        "max_R": 1e6,
+        "stepsize": 0.1,
+        "lambda0": 0.24,
+        "rho": 0.71,
+        "alpha": "Math.exp(logAlpha)",
+        "mu": "0.1"
+    },
+    
+    "model": " globalStore.n = 0\n crbdTreeSimulate( startTime, lambda0, mu, rho, filename, max_R )\n",
+    
+    "inference": {
+        "method": false,
+        "likelihood": false
+    }
+}

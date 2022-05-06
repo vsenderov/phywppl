@@ -12,13 +12,13 @@
 
 // Setting parameters/priors
 var filename = argv["_"][1]
-var rho = argv["_"][2]         // "sampling rate" read as a second argument because this is the default semantics of npm run wppl                       
-var startTime = argv["_"][3]   // tree age !!! Hijacked number of particles !!! TODO fix this
+var rho = argv["_"][2] // "sampling rate" read as a second argument because this is the default semantics of npm run wppl                       
+var startTime = argv["_"][3] // tree age !!! Hijacked number of particles !!! TODO fix this
 
-var stepsize = 1.0
+var stepsize = 0.1
 var lambda0 = 0.2
-var sigma = 0.5   //var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
-var alpha = 0.95  //var logAlpha = gaussian( {mu: 0, sigma: sigma} );  //var alpha = Math.exp(logAlpha)
+var sigma = 0.5 //var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
+var alpha = 0.95 //var logAlpha = gaussian( {mu: 0, sigma: sigma} );  //var alpha = Math.exp(logAlpha)
 var logAlpha = Math.log(alpha)
 
 console.log("age = ", startTime)
@@ -35,17 +35,18 @@ var MAX_LAMBDA = 1e12
 var MAX_NODES = 100000
 
 // Number of Taxa Globally (side-effect)
-globalStore.n = 0; 
+globalStore.n = 0;
 
-/**
- * Helper function to check for errors in the tree string
- * @param treeElement is a string 
- * @return boolean
+/* Helper function to check for errors in the tree 
+ * @param tree is a [String], i.e. tree
+ * @return Boolean
  */
-var checkError = function(treeElement) {
-    if (treeElement.includes("ERROR")) {
+var checkError = function (tree) {
+  var stringTree = tree.join("")
+  if (stringTree.includes("ERROR")) {
     return true
-    } else return false
+  } else
+    return false
 }
 
 ///////////////////////////////library code//////////////////////////////////////////////////////////////
@@ -53,130 +54,140 @@ var checkError = function(treeElement) {
  * Wrapper to the simulation function
  * Checks for errors and assembles the tree
  */
-var anads0TreeSimulate= function( startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R ) {
-    var Tree = anads0TreeSim( startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R );
-    if (Tree == false) {
+var anads0TreeSimulate = function (startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R) {
+  var Tree = anads0TreeSim(startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R);
+  if (Tree == false) {
     var message = "No survivors."
     fs.write(filename, message)
-        return(message)
-    }
-    var stringTree = Tree.join("")
-    if (stringTree.includes("ERROR_MAX")) {
-        var message = "Guards hit. Tree too big."
-        fs.write(filename, message)
-        return(message)
-    } else if (stringTree.includes("ERROR_ZERO")) {
-        var message = "Guards hit. Evolution stopped."
-        fs.write(filename, message)
-	return(message)
-    } else {
-        var Tree = "(" + stringTree + ")" + ';' ;
-        fs.write(filename, Tree);
-        return Tree
-    }
+    return (message)
+  }
+  var stringTree = Tree.join("")
+  if (stringTree.includes("ERROR_MAX")) {
+    var message = "Guards hit. Tree too big."
+    fs.write(filename, message)
+    return (message)
+  } else if (stringTree.includes("ERROR_ZERO")) {
+    var message = "Guards hit. Evolution stopped."
+    fs.write(filename, message)
+    return (message)
+  } else {
+    var Tree = "(" + stringTree + ")" + ';';
+    fs.write(filename, Tree);
+    return Tree
+  }
 }
 
 /**
  * Simulation function
  */
-var anads0TreeSim = function( startTime, lambda, stepsize, logAlpha, sigma, rho, max_R ) {
-    // extreme values patch
-    if  ( max_R == 0 ) {
-	return ["ERROR_MAX_RECURSION:", startTime]
-    }
-    if ( lambda  > MAX_LAMBDA ) {
-	return ["ERROR_MAX_LAMBDA:", startTime]
-    }
-    if ( lambda == 0.0 ) {
-	return ["ERROR_ZERO:", startTime]
-    }
-    if ( globalStore.n > MAX_NODES ) {
-	return ["ERROR_MAX_TAXA:", startTime]
-    }
-    //end extreme values patch
+var anads0TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, rho, max_R) {
+  // extreme values patch
+  if (max_R == 0) {
+    return ["ERROR_MAX_RECURSION:", startTime]
+  }
+  if (lambda > MAX_LAMBDA) {
+    return ["ERROR_MAX_LAMBDA:", startTime]
+  }
+  if (lambda == 0.0) {
+    return ["ERROR_ZERO:", startTime]
+  }
+  if (globalStore.n > MAX_NODES) {
+    return ["ERROR_MAX_TAXA:", startTime]
+  }
+  //end extreme values patch
 
-    var timeToSpeciation = exponential( {a: lambda } )
-    var timeToAnagenesis = stepsize
-    
-    //Anagenetic event
-    if (timeToAnagenesis < timeToSpeciation) {
-        var currentTime = startTime - timeToAnagenesis;
-        
-        if ( currentTime < 0 ) { 
-            globalStore.n = globalStore.n + 1; // new taxon
-            if ( flip( rho ) ) {
-                var Label = "Taxon_" + globalStore.n + ':';
-                var NewickTree = [Label, startTime] ;     // Make start on tree
-                return NewickTree;
-            } else {
-                return false;    //Survived to present, but not sampled. Remove branch.
-            }
-        }
-        
-        var internalBranch = timeToAnagenesis;
-        var multip = Math.exp(gaussian( {mu: logAlpha*stepsize, sigma: sigma*Math.sqrt(stepsize)}))      // Draw and calc new multiplier
-        var lambdaNew = lambda * multip ;                                                                // Calculate new lambda
-        var Tree = anads0TreeSim( currentTime, lambdaNew, stepsize, logAlpha, sigma, rho, max_R-1 );     // Continue along branch
-        if (Tree == false) {  // Extinct/not sampled
-          return false;
-        } else {
-          var newBranch = Tree[1] + internalBranch;           // Add the two "final" branches
-          var NewickTree = [Tree[0] , newBranch ] ;           // build correct final tree
-          return NewickTree;
-        }
-    } else {
-        //Speciation/cladogenetic event
-        var currentTime = startTime - timeToSpeciation;
-        var internalBranch = timeToSpeciation;          // Length of internal branch leading up to event
-        
-        if ( currentTime < 0 ){ 
-            globalStore.n = globalStore.n + 1;
-            if ( flip( rho ) ) {
-                var Label = "Taxon_" + globalStore.n + ':';           //Survived to present, sampled. Start tree: Set random label to leaf node
-                var NewickTree = [Label , startTime] ;                // Make start on tree
-                return NewickTree;
-            }
-            else {
-                return false;    //Survived to present, but not sampled. Remove branch.
-            }
-        } else { // Not reached present: Speciation
-            //Anagenetic "update" event at branching point
-            var delta = timeToSpeciation;
-            var multip = Math.exp(gaussian( {mu: logAlpha*delta, sigma: sigma*Math.sqrt(delta)}))         // Draw and calc new multiplier
-            var lambdaNew = lambda * multip ;                                                              // Calculate new lambda
-            
-            //Speciation/cladogenetic event
-            var leftTree  = anads0TreeSim( currentTime, lambdaNew, stepsize, logAlpha, sigma, rho, max_R-1 );       // Get back two Newick strings, partial trees
-            
-            // Check if the left Tree contains an error condition
-            if (leftTree && leftTree.some(checkError)) {
-              return leftTree;  // return only left tree immediately
-            }
-            
-            var rightTree = anads0TreeSim( currentTime, lambdaNew, stepsize, logAlpha, sigma, rho, max_R-1 );      // Get back two Newick strings, partial trees
-	    if (rightTree && rightTree.some(checkError)) { return rightTree; } // also check right tree for error
-            if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
-                    return false;
-            }
-            if (rightTree == false) {
-                    var newBranch = leftTree[1] + internalBranch;       // Add the two branches
-                    var NewickTree = [leftTree[0] , newBranch ] ;       // build correct tree without the extinct side
-                    return NewickTree ;
-            }
-            if (leftTree == false ) {
-                    var newBranch = rightTree[1] + internalBranch;      // Add the two branches
-                    var NewickTree = [rightTree[0] , newBranch ] ;      // build correct tree without the extinct side
-                    return NewickTree ;
-            } else {
-                    var NewickTree = ['(' + leftTree.join('') +',' + rightTree.join('') + ')' + ':' , internalBranch] ;          // Merge trees
-                    return NewickTree ;
-            }
-        }
+  var timeToSpeciation = exponential({
+    a: lambda
+  })
+  var timeToAnagenesis = stepsize
+
+  //Anagenetic event
+  if (timeToAnagenesis < timeToSpeciation) {
+    var currentTime = startTime - timeToAnagenesis;
+
+    if (currentTime < 0) {
+      globalStore.n = globalStore.n + 1; // new taxon
+      if (flip(rho)) {
+        var Label = "Taxon_" + globalStore.n + ':';
+        var NewickTree = [Label, startTime]; // Make start on tree
+        return NewickTree;
+      } else {
+        return false; //Survived to present, but not sampled. Remove branch.
+      }
     }
+
+    var internalBranch = timeToAnagenesis;
+    var multip = Math.exp(gaussian({
+      mu: logAlpha * stepsize,
+      sigma: sigma * Math.sqrt(stepsize)
+    })) // Draw and calc new multiplier
+    var lambdaNew = lambda * multip; // Calculate new lambda
+    var Tree = anads0TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, rho, max_R - 1); // Continue along branch
+    if (Tree == false) { // Extinct/not sampled
+      return false;
+    } else {
+      var newBranch = Tree[1] + internalBranch; // Add the two "final" branches
+      var NewickTree = [Tree[0], newBranch]; // build correct final tree
+      return NewickTree;
+    }
+  } else {
+    //Speciation/cladogenetic event
+    var currentTime = startTime - timeToSpeciation;
+    var internalBranch = timeToSpeciation; // Length of internal branch leading up to event
+
+    if (currentTime < 0) {
+      globalStore.n = globalStore.n + 1;
+      if (flip(rho)) {
+        var Label = "Taxon_" + globalStore.n + ':'; //Survived to present, sampled. Start tree: Set random label to leaf node
+        var NewickTree = [Label, startTime]; // Make start on tree
+        return NewickTree;
+      } else {
+        return false; //Survived to present, but not sampled. Remove branch.
+      }
+    } else { // Not reached present: Speciation
+      //Anagenetic "update" event at branching point
+      var delta = timeToSpeciation;
+      var multip = Math.exp(gaussian({
+        mu: logAlpha * delta,
+        sigma: sigma * Math.sqrt(delta)
+      })) // Draw and calc new multiplier
+      var lambdaNew = lambda * multip; // Calculate new lambda
+
+      //Speciation/cladogenetic event
+      var leftTree = anads0TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, rho, max_R - 1); // Get back two Newick strings, partial trees
+
+      // Check if the left Tree contains an error condition
+      if (leftTree && checkError(leftTree)) {
+        return leftTree; // return only left tree immediately
+      }
+
+      var rightTree = anads0TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, rho, max_R - 1); // Get back two Newick strings, partial trees
+      if (rightTree && checkError(rightTree)) {
+        return rightTree
+      } // also check right tree for error
+      
+      if (leftTree == false && rightTree == false) { // Both sides are extinct/not sampled
+        return false;
+      }
+      if (rightTree == false) {
+        var newBranch = leftTree[1] + internalBranch; // Add the two branches
+        var NewickTree = [leftTree[0], newBranch]; // build correct tree without the extinct side
+        return NewickTree;
+      }
+      if (leftTree == false) {
+        var newBranch = rightTree[1] + internalBranch; // Add the two branches
+        var NewickTree = [rightTree[0], newBranch]; // build correct tree without the extinct side
+        return NewickTree;
+      } else {
+        var NewickTree = ['(' + leftTree.join('') + ',' + rightTree.join('') + ')' + ':', internalBranch]; // Merge trees
+        return NewickTree;
+      }
+    }
+  }
 }
 
 ////////////////////////////////end library code////////////////////////////////////////////////////////////////////
 
 var message = "Error: MEMORY"
 fs.write(filename, message)
-anads0TreeSimulate( startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R )
+anads0TreeSimulate(startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R)

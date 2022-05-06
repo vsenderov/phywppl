@@ -38,15 +38,16 @@ var MAX_NODES = 100000
 
 globalStore.n = 0; // number of nodes
 
-/**
- * Helper function to check for errors in the tree string
- * @param treeElement is a string 
- * @return boolean
+/* Helper function to check for errors in the tree 
+ * @param tree is a [String], i.e. tree
+ * @return Boolean
  */
-var checkError = function(treeElement) {
-    if (treeElement.includes("ERROR")) {
+var checkError = function (tree) {
+  var stringTree = tree.join("")
+  if (stringTree.includes("ERROR")) {
     return true
-    } else return false
+  } else
+    return false
 }
 
 ///////////////////////////////library code//////////////////////////////////////////////////////////////
@@ -123,13 +124,15 @@ var clads1TreeSim = function( startTime, lambda, logAlpha, sigma, mu, rho, max_R
     var lambda2 = lambda * multip2                                // Calculate new lambda for daughter2
         
     var leftTree  = clads1TreeSim( currentTime, lambda1, logAlpha, sigma, mu, rho, max_R-1 );       // Get back two Newick strings, partial trees
-    // Check if the left Tree contains an error condition
-    if (leftTree && leftTree.some(checkError)) {
+      // Check if the left Tree contains an error condition
+      if (leftTree && checkError(leftTree)) {
         return leftTree; // return only left tree immediately
-    }
+      }
     
     var rightTree = clads1TreeSim( currentTime, lambda2, logAlpha, sigma, mu, rho, max_R-1 );      // Get back two Newick strings, partial trees
-    if (rightTree && rightTree.some(checkError)) { return rightTree; } // also check right tree for error
+    if (rightTree && checkError(rightTree)) {
+      return rightTree
+    } // also check right tree for error
     
     if (leftTree == false && rightTree == false ) {             // Both sides are extinct/not sampled
         return false;
