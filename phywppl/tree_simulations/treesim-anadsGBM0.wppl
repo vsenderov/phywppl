@@ -2,37 +2,17 @@
  * Simulation from startTime to the present under AnaDSGBM0, returns observed Tree (without extinctions)
  *
  * To run the simulation use:
- * npm run wppl tree_simulations/treesim-anadsGBM0.wppl 1 [OUTPUT_TREE] [RHO] [TREE_AGE]
+ * npm run wppl tree_simulations/treesim-anadsGBM0.wppl 1 [INPUT_DIR] [OUTPUT_FILE] 
  *
  * where 1 is the number of iterations (use external loop if needed)
- *       [OUTPUT_FILENAME] path to output file
+ *       [DIR_FILENAME] path to output file
  *       [RHO] sampling fraction
  *       [TREEAGE] Tree age (we've hijacked the unneeded number of particles)
  */
 
 // Setting parameters/priors
-var filename = argv["_"][1]
-var rho = argv["_"][2] // "sampling rate" read as a second argument because this is the default semantics of npm run wppl                       
-var startTime = argv["_"][3] // tree age !!! Hijacked number of particles !!! TODO fix this
-
-var stepsize = 0.1
-var lambda0 = 0.2
-var sigma = 0.5 //var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
-var alpha = 0.95 //var logAlpha = gaussian( {mu: 0, sigma: sigma} );  //var alpha = Math.exp(logAlpha)
-var logAlpha = Math.log(alpha)
-
-console.log("age = ", startTime)
-console.log("lambda0 = ", lambda0)
-console.log("sigma = ", sigma)
-console.log("alpha = ", alpha)
-console.log("rho = ", rho)
-console.log("step size = ", stepsize)
-console.log("\n")
-
-// GUARD
-var max_R = 100000 // 500*startTime  A guard against very deep recursions
-var MAX_LAMBDA = 1e12
-var MAX_NODES = 100000
+var dirname = argv["_"][1] // dirname is now the directory where the sims are stored
+var filename = argv["_"][2] // "sampling rate" read as a second argument because this is the default semantics of npm run wppl                       
 
 // Number of Taxa Globally (side-effect)
 globalStore.n = 0;
@@ -49,13 +29,44 @@ var checkError = function (tree) {
     return false
 }
 
+/* Helper function to read in data */
+var getHyperParamsFromDir = function(dirname) {
+    console.log("Parsing ", dirname)
+    return {
+        startTime: 10,
+	lambda0: 0.2,
+	logAlpha: -0.1,
+	sigma: 0.1,
+	rho: 0.5,
+	stepsize: 0.1,
+	max_R: 500,
+	MAX_LAMBDA: 1e12,
+	MAX_NODES: 100000
+    }
+}
+
+
+var obj = getHyperParamsFromDir(dirname)
+
+var startTime = obj.startTime
+var lambda0 = obj.lambda0
+var logAlpha = obj.logAlpha
+var sigma = obj.sigma
+var rho = obj.rho
+var stepsize = obj.stepsize
+var max_R = obj.max_R
+var MAX_LAMBDA = obj.MAX_LAMBDA
+var MAX_NODES = obj.MAX_NODES
+
+
+
 ///////////////////////////////library code//////////////////////////////////////////////////////////////
 /**
  * Wrapper to the simulation function
  * Checks for errors and assembles the tree
  */
 var anads0TreeSimulate = function (startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R) {
-  var Tree = anads0TreeSim(startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R);
+    var Tree = anads0TreeSim(startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R);
   if (Tree == false) {
     var message = "No survivors."
     fs.write(filename, message)
@@ -190,4 +201,17 @@ var anads0TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, rho,
 
 var message = "Error: MEMORY"
 fs.write(filename, message)
+
+
+console.log("age = ", startTime)
+console.log("lambda0 = ", lambda0)
+console.log("logAlpha = ", logAlpha)
+console.log("sigma = ", sigma)
+console.log("rho = ", rho)
+console.log("step size = ", stepsize)
+console.log("max_R = ", max_R)
+console.log("MAX_LAMBDA = ", MAX_LAMBDA)
+console.log("MAX_NODES = ", MAX_NODES)
+console.log("\n")
+
 anads0TreeSimulate(startTime, lambda0, stepsize, logAlpha, sigma, rho, max_R)
