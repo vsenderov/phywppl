@@ -4,10 +4,7 @@
  * To run the simulation use:
  * npm run wppl tree_simulations/treesim-anadsGBM0.wppl 1 [INPUT_DIR] [OUTPUT_FILE] 
  *
- * where 1 is the number of iterations (use external loop if needed)
- *       [DIR_FILENAME] path to output file
- *       [RHO] sampling fraction
- *       [TREEAGE] Tree age (we've hijacked the unneeded number of particles)
+
  */
 
 // Setting parameters/priors
