@@ -57,7 +57,6 @@ var getHyperParamsFromDir = function(dirname) {
     var logAlpha = obj.logAlpha
     var sigma = obj.sigma
     var rho = obj.rho
-    var stepsize = obj.stepsize
     var max_R = obj.max_R
     var MAX_LAMBDA = obj.MAX_LAMBDA
     var MAX_NODES = obj.MAX_NODES
