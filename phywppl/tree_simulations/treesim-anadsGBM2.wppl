@@ -2,44 +2,16 @@
  * Simulation from startTime to the present under AnaDSGBM2, returns observed Tree (without extinctions)
  *
  * To run the simulation use:
- * npm run wppl tree_simulations/treesim-anadsGBM2.wppl 1 [OUTPUT_TREE] [RHO] [TREE_AGE]
- *
- * where 1 is the number of iterations (use external loop if needed)
- *       [OUTPUT_FILENAME] path to output file
- *       [RHO] sampling fraction
- *       [TREEAGE] Tree age (we've hijacked the unneeded number of particles)
+ * npm run wppl tree_simulations/treesim-anadsGBM1.wppl 1 [INPUT_DIR] [OUTPUT_FILE] 
  *
  */
 
 // Setting parameters/priors
-var filename = argv["_"][1]
-var rho = argv["_"][2] // "sampling rate" read as a second argument  because this is the default semantics of npm run wppl
-var startTime = argv["_"][3] // tree age !!! Hijacked number of particles !!! TODO fix this
+var dirname = argv["_"][1] // dirname is now the directory where the sims are stored
+var filename = argv["_"][2] // "sampling rate" read as a second argument because this is the default semantics of npm run wppl                       
 
-var stepsize = 1.0
-var lambda0 = 0.2 //var lambda0 =  gamma( {shape: 1, scale: 1} )
-var mu0 = 0.1 //var mu0 =  gamma( {shape: 1, scale: 0.5} )
-var epsilon = mu0 / lambda0
-var sigma = 0.5 //var sigma = Math.sqrt( 1 / gamma( { shape: 3, scale: 1/startTime } ) )
-var alpha = 0.95 //var logAlpha = gaussian( {mu: 0, sigma: sigma} ) //var alpha = Math.exp(logAlpha) 
-var logAlpha = Math.log(alpha)
-
-console.log("age = ", startTime)
-console.log("lambda0 = ", lambda0)
-console.log("mu0 = ", mu0)
-console.log("sigma = ", sigma)
-console.log("alpha = ", alpha)
-console.log("rho = ", rho)
-console.log("step size = ", stepsize)
-console.log("\n")
-
-// GUARDS
-var max_R = 100000 // 500*startTime  A guard against very deep recursions
-var MAX_LAMBDA = 1e12
-var MAX_DIV = 1e12
-var MAX_NODES = 100000
-
-globalStore.n = 0; // global number of taxa
+// Number of Taxa Globally (side-effect)
+globalStore.n = 0;
 
 /* Helper function to check for errors in the tree 
  * @param tree is a [String], i.e. tree
@@ -53,38 +25,82 @@ var checkError = function (tree) {
     return false
 }
 
+/* Helper function to read in data */
+var getHyperParamsFromDir = function(dirname) {
+    //console.log("Parsing ", dirname)
+    return {
+        startTime: 10,
+	lambda0: 0.2,
+  mu: 0.1,
+	logAlpha: -0.1,
+	sigma: 0.1,
+	rho: 0.5,
+	stepsize: 0.1,
+	max_R: 500,
+	MAX_LAMBDA: 1e12,
+	MAX_NODES: 100000,
+  MAX_DIV: 1e12
+    }
+}
+
 ///////////////////////////////library code//////////////////////////////////////////////////////////////
 /**
  * Wrapper to the simulation function
  * Checks for errors and assembles the tree
+ * Re-starts simulation if either left or right tree fails
  */
-var anads2TreeSimulate = function (startTime, lambda0, stepsize, logAlpha, sigma, epsilon, rho, max_R) {
-  var Tree = anads2TreeSim(startTime, lambda0, stepsize, logAlpha, sigma, epsilon, rho, max_R);
-  if (Tree == false) {
-    var message = "No survivors."
-    fs.write(filename, message)
-    return (message)
-  }
-  var stringTree = Tree.join("")
-  if (stringTree.includes("ERROR_MAX")) {
-    var message = "Guards hit. Tree too big."
-    fs.write(filename, message)
-    return (message)
-  } else if (stringTree.includes("ERROR_ZERO")) {
-    var message = "Guards hit. Evolution stopped."
-    fs.write(filename, message)
-    return (message)
-  } else {
-    var Tree = "(" + stringTree + ")" + ';';
-    fs.write(filename, Tree);
-    return Tree
-  }
+ var anads2TreeSimulate = function (dirname) {
+  var obj = getHyperParamsFromDir(dirname)
+  var startTime = obj.startTime
+  var lambda0 = obj.lambda0
+  var mu = obj.mu
+  var logAlpha = obj.logAlpha
+  var sigma = obj.sigma
+  var rho = obj.rho
+  var stepsize = obj.stepsize
+  var max_R = obj.max_R
+  var MAX_LAMBDA = obj.MAX_LAMBDA
+  var MAX_NODES = obj.MAX_NODES
+  var MAX_DIV = obj.MAX_DIV
+
+    var TreeLeft = anads2TreeSim(startTime, lambda0, stepsize, logAlpha, sigma, mu, rho, max_R, MAX_LAMBDA, MAX_NODES, MAX_DIV);
+    if (TreeLeft == false )  {
+      console.log("Error: No survivors in this subtree") 
+      anads2TreeSimulate(dirname)
+    }
+    else{
+      var stringTreeLeft = TreeLeft.join("")
+      if ((stringTreeLeft.includes("ERROR_MAX")) || (stringTreeLeft.includes("ERROR_ZERO"))) {
+        console.log("Error: Guards hit") 
+        anads2TreeSimulate(dirname)
+      }
+      else{ //So first tree is ok
+        var TreeRight = anads2TreeSim(startTime, lambda0, stepsize, logAlpha, sigma, mu, rho, max_R, MAX_LAMBDA, MAX_NODES, MAX_DIV);
+        if (TreeRight == false )  {
+          console.log("Error: No survivors in this subtree") 
+          anads2TreeSimulate(dirname)
+        }
+        else {
+          var stringTreeRight = TreeRight.join("")
+          if ((stringTreeRight.includes("ERROR_MAX")) || (stringTreeRight.includes("ERROR_ZERO"))) {
+           console.log("Error: Guards hit") 
+           anads2TreeSimulate(dirname)
+          }
+          else{ //So both the first and second tree is ok. Join trees and output:
+            var stringTree = [TreeLeft.join('') + ',' + TreeRight.join('')];
+            var Tree = "(" + stringTree + ")" + ';';
+            //fs.write(filename, Tree);
+            return Tree
+          } 
+        }
+      }
+    }
 }
 
 /**
  * Simulation function
  */
-var anads2TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, epsilon, rho, max_R) {
+var anads2TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, epsilon, rho, max_R, MAX_LAMBDA, MAX_NODES, MAX_DIV) {
   var mu = epsilon * lambda
 
   // extreme values patch
@@ -130,7 +146,7 @@ var anads2TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, epsi
       sigma: sigma * Math.sqrt(stepsize)
     })) // Draw and calc new multiplier
     var lambdaNew = lambda * multip;
-    var Tree = anads2TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, epsilon, rho, max_R - 1); // Continue along branch
+    var Tree = anads2TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, epsilon, rho, max_R - 1, MAX_LAMBDA, MAX_NODES, MAX_DIV); // Continue along branch
     if (Tree == false) { // Extinct/not sampled
       return false;
     } else {
@@ -164,13 +180,13 @@ var anads2TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, epsi
 
       // Speciation/cladogenetic event
       // Get back two Newick strings, partial trees
-      var leftTree = anads2TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, epsilon, rho, max_R - 1);
+      var leftTree = anads2TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, epsilon, rho, max_R - 1, MAX_LAMBDA, MAX_NODES, MAX_DIV);
       // Check if the left Tree contains an error condition
       if (leftTree && checkError(leftTree)) {
         return leftTree; // return only left tree immediately
       }
 
-      var rightTree = anads2TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, epsilon, rho, max_R - 1);
+      var rightTree = anads2TreeSim(currentTime, lambdaNew, stepsize, logAlpha, sigma, epsilon, rho, max_R - 1, MAX_LAMBDA, MAX_NODES, MAX_DIV);
       if (rightTree && checkError(rightTree)) {
         return rightTree
       } // also check right tree for error
@@ -196,6 +212,4 @@ var anads2TreeSim = function (startTime, lambda, stepsize, logAlpha, sigma, epsi
 }
 ////////////////////////////////end library code////////////////////////////////////////////////////////////////////
 
-var message = "Error: MEMORY"
-fs.write(filename, message)
-anads2TreeSimulate(startTime, lambda0, stepsize, logAlpha, sigma, epsilon, rho, max_R)
+anads2TreeSimulate(dirname)
