@@ -2,13 +2,16 @@
  * Simulation from startTime to the present under CRBD, returns observed Tree (without extinctions)
  *
  * To run the simulation use:
- * npm run wppl tree_simulations/treesim-crbd.wppl 1 [INPUT_DIR] [OUTPUT_FILE] 
+ * npm run wppl tree_simulations/treesim-crbd.wppl NSIMS INFERENCE_DIR AGE RHO
+ *
  *
  */
 
 // Setting parameters/priors
 var dirname = argv["_"][1] // dirname is now the directory where the sims are stored
-var filename = argv["_"][2] // "sampling rate" read as a second argument because this is the default semantics of npm run wppl                       
+                           // samples will be drawn from it
+var age = argv["_"][2]     // simulation age
+var rho = argv["_"][3]     // simulation rho
 
 // Number of Taxa Globally (side-effect)
 globalStore.n = 0;
@@ -27,19 +30,19 @@ var checkError = function (tree) {
 
 /* Helper function to read in data */
 var getHyperParamsFromDir = function(dirname) {
-    //console.log("Parsing ", dirname)
+    var sample = phyjs.sample(dirname)
     return {
-        startTime: 10,
-	lambda0: 0.2,
-  mu: 0.1,
-	logAlpha: -0.1,
-	sigma: 0.1,
-	rho: 0.5,
-	stepsize: 0.1,
+        startTime: age,
+	lambda0: sample.lambda,
+        mu: sample.mu,
+	logAlpha: 0,
+	sigma: 0,
+	rho: rho,
+	stepsize: 0,
 	max_R: 500,
 	MAX_LAMBDA: 1e12,
-	MAX_NODES: 100000,
-  MAX_DIV: 1e12
+	MAX_NODES: 1e6,
+        MAX_DIV: 1e12
     }
 }
 
