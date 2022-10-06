@@ -21,6 +21,18 @@ var lognormal_logpdf = function ( x, sigma, mu )
     return (term1 + term2)
 }
 
+/**
+Samples from a directory using a sample.py file in the directory
+@param dirname where to sample from
+@return a JSON object with samples
+ */
+var sample = function(dirname)
+{
+    var shell = require('shelljs')
+    shell.pushd(dirname);
+    var execution_result = shell.exec("python3 ./sample.py",  {silent:true})
+    return JSON.parse(execution_result.stdout)
+}
 
 /** Calculate transition probabilities to a new state from the rate
  *  rate matrix
@@ -329,11 +341,10 @@ module.exports = {
     MIN_T : MIN_T,
 
     Counter: Counter,
-    count: count
+    count: count,
+
+    sample: sample
 }
-
-
-
 
 
 

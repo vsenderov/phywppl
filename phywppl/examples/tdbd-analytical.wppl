@@ -18,6 +18,8 @@ var tree = phyjs.read_phyjson(argv["_"][1])
 var rho = argv["_"][2]
 var particles = argv["_"][3]
 
+
+
 /**
  * Model specification
  */
@@ -25,15 +27,21 @@ var model = function()
 {
     /* Define priors on lambda_0, mu_0, z, rho, as well as the decay functions
        lambdaFun and muFun. z = 0 leads to CRBD */
-    var lambda_0 = 0.2
-    var epsilon  = 0.5
-    var mu_0     = lambda_0 * epsilon
-    var z        = 0.000001
-    var rho      = 1.0
+    var lambda_0 = gamma( {shape: 1.0, scale: 1.0} )
+    var mu_0     = gamma( {shape: 1.0, scale: 0.5} )
+    var z        = gaussian({mu: 0.0, sigma: 0.05})
       
     /* Simulate conditionally on the tree */
-    var ret = exactTDBDLikelihood(tree, lambda_0, mu_0, z, rho )  + TDBD_survivorshipBias(tree, lambda_0, mu_0, z, rho) 
-    return ret
+    var likelihood = exactTDBDLikelihood(tree, lambda_0, mu_0, z, rho )  + TDBD_survivorshipBias(tree, lambda_0, mu_0, z, rho) 
+    
+    
+     if (Number.isNaN(likelihood)) {
+  	factor(-Infinity)
+  }
+  else {
+    factor(likelihood)
+  }
 }
 
-model()
+var dist = Infer( {method: 'SMC', particles: particles, model: model} );
+dist.normalizationConstant

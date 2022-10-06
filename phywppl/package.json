@@ -2,7 +2,7 @@
    "name": "phywppl",
    "version": "1.0.0",
    "config": {
-      "stacksize": "400",
+      "stacksize": "8192",
       "loglevel": "silent",
       "nreps": "12"
    },
@@ -21,8 +21,8 @@
          "models/lsbds.wppl",
          "models/tdbd-analytical.wppl",
          "models/tdbd.wppl",
-          "models/anads2.wppl",
-	  "models/simulators.wppl"
+         "models/anads2.wppl",
+	 "models/simulators.wppl"
       ]
    },
    "scripts": {
