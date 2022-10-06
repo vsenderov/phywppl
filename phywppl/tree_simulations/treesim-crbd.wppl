@@ -8,8 +8,7 @@
  */
 
 // Setting parameters/priors
-var dirname = argv["_"][1] // dirname is now the directory where the sims are stored
-                           // samples will be drawn from it
+var dirname = argv["_"][1] // dirname is now the directory where the sims are stored and samples will be drawn from it
 var age = argv["_"][2]     // simulation age
 var rho = argv["_"][3]     // simulation rho
 
@@ -33,15 +32,15 @@ var getHyperParamsFromDir = function(dirname) {
     var sample = phyjs.sample(dirname)
     return {
         startTime: age,
-	lambda0: sample.lambda,
+	      lambda0: sample.lambda,
         mu: sample.mu,
-	logAlpha: 0,
-	sigma: 0,
-	rho: rho,
-	stepsize: 0,
-	max_R: 500,
-	MAX_LAMBDA: 1e12,
-	MAX_NODES: 1e6,
+	      logAlpha: 0,
+	      sigma: 0,
+	      rho: rho,
+	      stepsize: 0,
+	      max_R: 5000,
+	      MAX_LAMBDA: 1e12,
+	      MAX_NODES: 1e6,
         MAX_DIV: 1e12
     }
 }
@@ -65,25 +64,29 @@ var crbdTreeSimulate = function (dirname) {
       var TreeLeft = crbdTreeSim(startTime, lambda0, mu, rho, max_R, MAX_LAMBDA, MAX_NODES);
       if (TreeLeft == false )  {
         console.log("Error: No survivors in this subtree") 
-        crbdTreeSimulate(dirname)
+        globalStore.n = 0 // we need to reset counter before we start over
+        return crbdTreeSimulate(dirname)
       }
       else{
         var stringTreeLeft = TreeLeft.join("")
         if ((stringTreeLeft.includes("ERROR_MAX")) || (stringTreeLeft.includes("ERROR_ZERO"))) {
           console.log("Error: Guards hit") 
-          crbdTreeSimulate(dirname)
+          globalStore.n = 0 // we need to reset counter before we start over
+          return crbdTreeSimulate(dirname)
         }
         else{ //So first tree is ok
           var TreeRight = crbdTreeSim(startTime, lambda0, mu, rho, max_R, MAX_LAMBDA, MAX_NODES);
           if (TreeRight == false )  {
             console.log("Error: No survivors in this subtree") 
-            crbdTreeSimulate(dirname)
+            globalStore.n = 0 // we need to reset counter before we start over
+            return crbdTreeSimulate(dirname)
           }
           else {
             var stringTreeRight = TreeRight.join("")
             if ((stringTreeRight.includes("ERROR_MAX")) || (stringTreeRight.includes("ERROR_ZERO"))) {
               console.log("Error: Guards hit") 
-              crbdTreeSimulate(dirname)
+              globalStore.n = 0 // we need to reset counter before we start over
+              return crbdTreeSimulate(dirname)
             }
             else{ //So both the first and second tree is ok. Join trees and output:
               var stringTree = [TreeLeft.join('') + ',' + TreeRight.join('')];
