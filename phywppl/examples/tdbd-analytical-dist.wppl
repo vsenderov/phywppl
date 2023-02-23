@@ -1,0 +1,49 @@
+/** 
+ * @file Example: Time-Dependent Birth-Death Model, Analytical Solution
+ * 
+ * Turnover rate ε is constant
+ *
+ * @example
+ * 
+ * npm run wppl examples/tdbd-analytical.wppl 1 [TREEPATH] [RHO] [NPART]
+ *
+ *  where
+ *       [TREEPATH] path to phyjson tree
+ *       [RHO] sampling probability
+ *       [NPART] number of particles
+ */
+
+
+var tree = phyjs.read_phyjson(argv["_"][1])
+var rho = argv["_"][2]
+var particles = argv["_"][3]
+
+
+
+/**
+ * Model specification
+ */
+var model = function() {
+    /* Define priors on lambda_0, mu_0, z, rho, as well as the decay functions
+       lambdaFun and muFun. z = 0 leads to CRBD */
+    var lambda_0 = gamma( {shape: 1.5, scale: 2.0} )
+    var mu_0     = gamma( {shape: 1.5, scale: 1.0} )
+    var z        = gaussian({mu: 0.0, sigma: 0.05})
+    
+    /* Simulate conditionally on the tree */
+    var likelihood = exactTDBDLikelihood(tree, lambda_0, mu_0, z, rho ) +
+	TDBD_survivorshipBias(tree, lambda_0, mu_0, z, rho) 
+    
+    if (Number.isNaN(likelihood)) {
+	factor(-Infinity)
+    }
+    else {
+	factor(likelihood)
+    }
+    
+    return {lambda_0, mu_0, z}
+}
+
+var dist = Infer( {method: 'SMC', particles: particles, model: model} );
+fs.write("tdbd.json", JSON.stringify(dist.samples))
+dist.normalizationConstant
