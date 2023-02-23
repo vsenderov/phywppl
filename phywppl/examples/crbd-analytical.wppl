@@ -20,16 +20,14 @@ var particles = argv["_"][3]
 //var lambda = 0.2
 //var mu     = 0.1
 
-var k_lambda = 1.0
-var theta_lambda = 1.0
-var k_mu = 1.0
-var theta_mu = 0.5
+var k_lambda = 1.5
+var theta_lambda = 2.0
+var k_mu = 1.5
+var theta_mu = 1.0
 
 // Compute the likelihood
 //exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
 //exactCRBDLikelihood(tree, lambda, mu, rho)
-
-
 
 var model = function()
 {
@@ -53,11 +51,19 @@ var model = function()
     factor(likelihood)
   }
   // Condition on detection 
-
+  return({lambda, mu})
 }
 
 /**
  * Inference
    */
 var dist = Infer({method: 'SMC', particles: particles, model: model})
+//dist.normalizationConstant
+
+//viz(dist)
+
+// var posteriorLambda = marginalize(dist, "lambda")
+// console.log("MAP(lambda) = ", posteriorLambda.MAP().val)
+// console.log("Expectation(lambda) = ", expectation(posteriorLambda))
+
 dist.normalizationConstant

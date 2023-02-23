@@ -33,7 +33,7 @@ var getHyperParamsFromDir = function (dirname) {
     startTime: age,
     lambda0: sample.lambda,
     mu: sample.mu,
-    logAlpha: sample.log_α_gbm, // TODO stupid alpha
+    logAlpha: sample.log_α_gbm, 
     sigma: sample.sigma2_gbm,
     rho: rho,
     stepsize: 0.05,

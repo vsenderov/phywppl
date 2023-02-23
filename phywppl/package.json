@@ -2,7 +2,7 @@
    "name": "phywppl",
    "version": "1.0.0",
    "config": {
-      "stacksize": "8192",
+      "stacksize": "16000",
       "loglevel": "silent",
       "nreps": "12"
    },
@@ -22,7 +22,7 @@
          "models/tdbd-analytical.wppl",
          "models/tdbd.wppl",
          "models/anads2.wppl",
-	 "models/simulators.wppl"
+         "models/simulators.wppl"
       ]
    },
    "scripts": {
@@ -35,6 +35,5 @@
       "phyjs": "file:../phyjs",
       "shelljs": "^0.8.4",
       "webppl-fs": "git+https://github.com/null-a/webppl-fs.git"
-   },
-   "devDependencies": {}
+   }
 }

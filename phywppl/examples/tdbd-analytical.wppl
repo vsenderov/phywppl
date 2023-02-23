@@ -27,8 +27,8 @@ var model = function()
 {
     /* Define priors on lambda_0, mu_0, z, rho, as well as the decay functions
        lambdaFun and muFun. z = 0 leads to CRBD */
-    var lambda_0 = gamma( {shape: 1.0, scale: 1.0} )
-    var mu_0     = gamma( {shape: 1.0, scale: 0.5} )
+    var lambda_0 = gamma( {shape: 1.5, scale: 2.0} )
+    var mu_0     = gamma( {shape: 1.5, scale: 1.0} )
     var z        = gaussian({mu: 0.0, sigma: 0.05})
       
     /* Simulate conditionally on the tree */
