@@ -1,0 +1,70 @@
+/** 
+ * @file 
+ * Example: Constant-rate birth-death analytical solution
+ * 
+ * To run the example use:
+ * 
+ * npm run wppl examples/crbd-analytical.wppl [N] [TREEPATH] [RHO] [NPART]
+ * 
+ * where [N] is the number of iterations, for example 3
+ *       [TREEPATH] path to phyjson tree
+ *
+ */
+
+
+var tree = phyjs.read_phyjson(argv["_"][1])
+var rho = argv["_"][2]
+var particles = argv["_"][3]
+
+// Set lambda and mu
+//var lambda = 0.2
+//var mu     = 0.1
+
+var k_lambda = 1.5
+var theta_lambda = 2.0
+var k_mu = 1.5
+var theta_mu = 2.0
+
+// Compute the likelihood
+//exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
+//exactCRBDLikelihood(tree, lambda, mu, rho)
+
+var model = function()
+{
+    var lambda = gamma({
+ 	shape: k_lambda,
+ 	scale: theta_lambda
+    })
+    var mu = gamma({
+	shape: k_mu,
+	scale: theta_mu
+    })
+
+    // Simulate conditionally on the tree
+    // It returns all variables of interest
+    var likelihood = exactCRBDLikelihood( tree, lambda, mu, rho ) //+ CRBD_survivorshipBias(tree, lambda, mu, rho)
+
+  if (Number.isNaN(likelihood)) {
+  	factor(-Infinity)
+  }
+  else {
+    factor(likelihood)
+  }
+  // Condition on detection 
+  return({lambda, mu})
+}
+
+/**
+ * Inference
+   */
+var dist = Infer({method: 'MCMC',  model: model, samples: particles, lag: 10, burn: 100000})
+//dist.normalizationConstant
+
+//viz(dist)
+
+// var posteriorLambda = marginalize(dist, "lambda")
+// console.log("MAP(lambda) = ", posteriorLambda.MAP().val)
+// console.log("Expectation(lambda) = ", expectation(posteriorLambda))
+
+fs.write("crbd.json", JSON.stringify(dist.samples))
+//dist.normalizationConstant
