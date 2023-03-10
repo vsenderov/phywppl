@@ -42,7 +42,7 @@ var model = function()
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
-    var likelihood = exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
+    var likelihood = exactCRBDLikelihood( tree, lambda, mu, rho ) //+ CRBD_survivorshipBias(tree, lambda, mu, rho)
 
   if (Number.isNaN(likelihood)) {
   	factor(-Infinity)

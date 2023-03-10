@@ -1,0 +1,83 @@
+/**
+ * Simulation from startTime to the present under AnaDSGBM0, returns observed Tree (without extinctions)
+ * 
+ * Simulates from priors.
+ * 
+ * Priors are read from a PhyJSON file with the following format.
+ * 
+ * {
+ *   "lambda_0" : {
+ *      "shape":
+ *      "scale":
+ *    },
+ *    "mu0" : {
+ *       "shape":
+ *       "scale":
+ *    }
+ *    "alphaSigma":  {
+ *       "m0":
+ *       "v":
+ *       "a":
+ *       "b":
+ *    }  
+ * }
+ *
+ * To run the simulation use:
+ * npm run wppl tree_simulations/anadsGBM2.wppl NSIMS tree_simulations/priors.json NSIMS AGE RHO
+ *
+ */
+
+// Setting parameters/priors
+var dirname = argv["_"][1] // configuration for the priors
+var age = argv["_"][2]     // simulation age
+var rho = argv["_"][3]     // simulation rho                      
+
+// Number of Taxa Globally (side-effect)
+globalStore.n = 0;
+
+/* Helper function to check for errors in the tree 
+ * @param tree is a [String], i.e. tree
+ * @return Boolean
+ */
+var checkError = function (tree) {
+  var stringTree = tree.join("")
+  if (stringTree.includes("ERROR")) {
+    return true
+  } else
+    return false
+}
+
+/**
+ * Helper function to read in data 
+ * webppl uses the shape-scale parametrization of the gamma distribution
+ * both rootppl and webppl use the standard deviation as parametrization
+ * of the normal distribution
+ **/ 
+var getHyperParamsFromDir = function (dirname) {
+  var priors = JSON.parse(fs.read(dirname))
+  var lambda0 = gamma({ shape: priors.lambda_0.shape, scale: priors.lambda_0.scale })
+  var mu0 = gamma({ shape: priors.mu_0.shape, scale: priors.mu_0.scale })
+  var sigma = 1.0 / gamma({ shape: priors.alphaSigma.a, scale: 1.0 / priors.alphaSigma.b })
+  var logAlpha = gaussian({ mu: priors.alphaSigma.m0, sigma: sigma / priors.alphaSigma.v })
+
+  var obj = {
+    startTime: age,
+    lambda0: lambda0,
+    mu: mu0,
+    logAlpha: logAlpha, 
+    sigma: sigma,
+    rho: rho,
+    stepsize: 0.1,
+    max_R: 500,
+    MAX_LAMBDA: 1e6,
+    MAX_NODES: 1e5,
+    MAX_DIV: 1e6
+      }
+
+  console.log(JSON.stringify(obj))
+
+  return obj
+}
+////////////////////////////////end library code////////////////////////////////////////////////////////////////////
+
+anads2TreeSimulate(dirname)

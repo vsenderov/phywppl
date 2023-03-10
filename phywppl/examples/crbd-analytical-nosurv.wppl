@@ -23,7 +23,7 @@ var particles = argv["_"][3]
 var k_lambda = 1.5
 var theta_lambda = 2.0
 var k_mu = 1.5
-var theta_mu = 2.0
+var theta_mu = 1.0
 
 // Compute the likelihood
 //exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
@@ -42,7 +42,7 @@ var model = function()
 
     // Simulate conditionally on the tree
     // It returns all variables of interest
-    var likelihood = exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
+    var likelihood = exactCRBDLikelihood( tree, lambda, mu, rho ) //+ CRBD_survivorshipBias(tree, lambda, mu, rho)
 
   if (Number.isNaN(likelihood)) {
   	factor(-Infinity)
@@ -57,7 +57,7 @@ var model = function()
 /**
  * Inference
    */
-var dist = Infer({method: 'MCMC',  model: model, samples: particles, lag: 10, burn: 100000})
+var dist = Infer({method: 'SMC', particles: particles, model: model})
 //dist.normalizationConstant
 
 //viz(dist)
@@ -66,5 +66,4 @@ var dist = Infer({method: 'MCMC',  model: model, samples: particles, lag: 10, bu
 // console.log("MAP(lambda) = ", posteriorLambda.MAP().val)
 // console.log("Expectation(lambda) = ", expectation(posteriorLambda))
 
-fs.write("crbd.json", JSON.stringify(dist.samples))
-//dist.normalizationConstant
+dist.normalizationConstant
