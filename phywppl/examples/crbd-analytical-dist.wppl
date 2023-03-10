@@ -23,7 +23,7 @@ var particles = argv["_"][3]
 var k_lambda = 1.5
 var theta_lambda = 2.0
 var k_mu = 1.5
-var theta_mu = 1.0
+var theta_mu = 2.0
 
 // Compute the likelihood
 //exactCRBDLikelihood( tree, lambda, mu, rho ) + CRBD_survivorshipBias(tree, lambda, mu, rho)
@@ -57,7 +57,7 @@ var model = function()
 /**
  * Inference
    */
-var dist = Infer({method: 'SMC', particles: particles, model: model})
+var dist = Infer({method: 'MCMC',  model: model, samples: particles, lag: 10, burn: 100000})
 //dist.normalizationConstant
 
 //viz(dist)
@@ -67,4 +67,4 @@ var dist = Infer({method: 'SMC', particles: particles, model: model})
 // console.log("Expectation(lambda) = ", expectation(posteriorLambda))
 
 fs.write("crbd.json", JSON.stringify(dist.samples))
-dist.normalizationConstant
+//dist.normalizationConstant
